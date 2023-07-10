@@ -6,5 +6,9 @@ app = Flask(__name__)
 def welcome():
     return render_template('welcome.html')
 
+@app.route('/home')
+def second_home():
+    return render_template('home.html')
+
 if __name__ == '__main__':
     app.run()

@@ -1,2 +1,6 @@
+env/
+env/*
+venv/
+venv/*
 venv/
 app.cpython-38.pyc

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Job Tracker - Contacts </title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Job Tracker</h1>
+        </header>
+        <nav class="nav-bar">
+            <ul>
+                <li><a href="skills">Skills</a></li>
+                <li><a href="jobs">Jobs</a></li>
+                <li><a class="active" href="contacts">Contacts</a></li>
+            </ul>
+        </nav>
+        <main>
+            <div class="table-container"></main>
+            <h2 class="page-header">Contacts</h2>
+           
+            <form class="data-form" style="display: none;">
+                <input type="text" id="job-input" placeholder="Enter a job">
+                <button type="submit">Save</button>
+            </form>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Company</th>
+                        <th>Title</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ron Trompson</td>
+                        <td>Enron</td>
+                        <td>Recruiter</td>
+                        <td>911</td>
+                        <td>RonTrompsonFlatEarther @hotmail.com</td>
+                        <td><button class="edit-button">Edit</button></td>
+                        <td><button class="delete-button">Delete</button></td>
+                    </tr>
+                    <tr>
+                        <td>Ron Trompson</td>
+                        <td>Enron</td>
+                        <td>Recruiter</td>
+                        <td>411-11221</td>
+                            <td>HotOne @hotmail.com</td>
+                        <td><button class="edit-button">Edit</button></td>
+                        <td><button class="delete-button">Delete</button></td>
+                    </tr>
+                    <!-- Add more job rows here -->
+                </tbody>
+            </table>
+            
+            <div class="add-container">
+                <h3>Add Contact</h3>
+                <button class="add-data-button">+</button>
+            </div>
+        </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

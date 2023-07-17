@@ -4,7 +4,14 @@ body {
     height: 100vh;
 }
 
+header {
+    min-height: 5vh;
+}
 
+main {
+    flex-grow: 1;
+    min-height: calc(80vh - 5vh); /* Subtract header's min-height */
+}
 
 header {
     background-color: #f2f2f2;

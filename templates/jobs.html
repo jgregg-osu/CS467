@@ -1,92 +1,56 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Job Tracker - Jobs</title>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Job Tracker</h1>
+<!-- jobs.html -->
+{% extends "base.html" %}
 
-            <button class="popup-btn instructions-btn">Instructions</button>
+{% block content %}
+    <div class="table-container">
+    <h2 class="page-header">Jobs</h2>
 
-            <div class="popup">
-              <button class="close-btn">X</button>
-              <h3>Instructions</h3>
-              <p>This job tracking app allows you to keep track of jobs, skills, and contacts.</p> 
-              <p>As you apply for jobs or gain new skills:</p>
-              <ul>
-                <li>Add any jobs you apply for to the Jobs page</li>
-                <li>Include relevant skills and contacts for each job</li>
-                <li>Add new skills you gain to the Skills page</li>
-                <li>Add new contacts to the Contacts page</li>
-              </ul>
-              <p>This allows you to see which skills are needed for different jobs and identify in-demand skills.</p>
-              <p>Use this app to organize your job search and highlight your most relevant skills!</p>
-            </div>
-        </header>
-        <nav class="nav-bar">
-            <ul>
-                <li><a href="skills">Skills</a></li>
-                <li><a class="active" href="jobs">Jobs</a></li>
-                <li><a href="contacts">Contacts</a></li>
-            </ul>
-        </nav>  
-        <main>
-            <div class="table-container"></div>
-            <h2 class="page-header">Jobs</h2>
-           
-            <form class="data-form" style="display: none;">
-                <input type="text" id="job-input" placeholder="Enter a job">
-                <button type="submit">Save</button>
-            </form>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Salary</th>
-                        <th>Skills</th>
-                        <th>Start Date</th>
-                        <th>Contact</th>
-                        <th>Edit</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Software Developer</td>
-                        <td>$80,000</td>
-                        <td>Python, JavaScript, HTML, CSS</td>
-                        <td>2022-01-01</td>
-                        <td>John Doe</td>
-                        <td><button class="edit-button">Edit</button></td>
-                        <td><button class="delete-button">Delete</button></td>
-                    </tr>
-                    <tr>
-                        <td>Data Analyst</td>
-                        <td>$60,000</td>
-                        <td>SQL, Excel, Statistics</td>
-                        <td>2022-02-15</td>
-                        <td>Jane Smith</td>
-                        <td><button class="edit-button">Edit</button></td>
-                        <td><button class="delete-button">Delete</button></td>
-                    </tr>
-                    <!-- Add more job rows here -->
-                </tbody>
-            </table>
-            
-            <div class="add-container">
-                <h3>Add Job</h3>
-                <button class="add-data-button">+</button>
-            </div>
-        </main>
+    <form class="data-form" style="display: none;">
+        <input type="text" id="job-input" placeholder="Enter a job">
+        <button type="submit">Save</button>
+    </form>
 
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Salary</th>
+                <th>Skills</th>
+                <th>Start Date</th>
+                <th>Contact</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Software Developer</td>
+                <td>$80,000</td>
+                <td>Python, JavaScript, HTML, CSS</td>
+                <td>2022-01-01</td>
+                <td>John Doe</td>
+                <td><button class="edit-button">Edit</button></td>
+                <td><button class="delete-button">Delete</button></td>
+            </tr>
+            <tr>
+                <td>Data Analyst</td>
+                <td>$60,000</td>
+                <td>SQL, Excel, Statistics</td>
+                <td>2022-02-15</td>
+                <td>Jane Smith</td>
+                <td><button class="edit-button">Edit</button></td>
+                <td><button class="delete-button">Delete</button></td>
+            </tr>
+        <!-- Add more job rows here -->
+        </tbody>
+    </table>
+
+    <div class="add-container">
+        <h3>Add Job</h3>
+        <button class="add-data-button">+</button>
+    </div>
     </div>
 
-    <script src="script.js"></script>
-</body>
-</html>
+{% endblock %}
+
+

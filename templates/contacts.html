@@ -3,12 +3,30 @@
 <head>
     <meta charset="utf-8">
     <title>Job Tracker - Contacts </title>
-    <link rel="stylesheet" href="static/style.css">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Job Tracker</h1>
+
+            <button class="popup-btn instructions-btn">Instructions</button>
+
+            <div class="popup">
+              <button class="close-btn">X</button>
+              <h3>Instructions</h3>
+              <p>This job tracking app allows you to keep track of jobs, skills, and contacts.</p> 
+              <p>As you apply for jobs or gain new skills:</p>
+              <ul>
+                <li>Add any jobs you apply for to the Jobs page</li>
+                <li>Include relevant skills and contacts for each job</li>
+                <li>Add new skills you gain to the Skills page</li>
+                <li>Add new contacts to the Contacts page</li>
+              </ul>
+              <p>This allows you to see which skills are needed for different jobs and identify in-demand skills.</p>
+              <p>Use this app to organize your job search and highlight your most relevant skills!</p>
+            </div>
         </header>
         <nav class="nav-bar">
             <ul>

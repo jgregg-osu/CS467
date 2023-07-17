@@ -176,3 +176,43 @@ th, td {
 .page-header {
     padding-top: 20px;
 }
+
+#login-heading {
+    text-align: center;
+  }
+
+  .popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    display: none;
+  }
+  
+  .popup button {
+    float: right;
+  }
+
+  .instructions-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 10px;
+    margin-right: 10px;
+  }
+
+  /* Styles */
+.container {
+position: relative;
+}
+
+.instructions-btn {
+position: absolute;
+top: 0;
+right: 0;
+margin-top: 10px;
+margin-right: 10px;
+}

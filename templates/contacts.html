@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Web App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(to right, #007bff, transparent);
+            padding: 20px;
+            overflow: hidden;
+        }
+        .navbar a {
+            text-decoration: none;
+            color: #fff;
+            padding: 10px 20px;
+            margin: 0 10px;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        .add-button {
+            margin-top: 20px;
+            border-radius: 10px;
+            background-color: green;
+            color: white;
+            font-size: 18px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to My Web App</h1>
+    <div class="content">
+        <p>Jobs: Add jobs and internships you've applied to.</p>
+        <p>Skills: Add skills that will be useful for finding a job.</p>
+        <p>Contacts: Store all the business contacts you've made.</p>
+    </div>
+    <div class="navbar">
+        <a href="/jobs">Jobs</a>
+        <a href="/skills">Skills</a>
+        <a href="/contacts">Contacts</a>
+    </div>
+    <button class="add-button">Add New Professional Contact</button>
+</body>
+</html>

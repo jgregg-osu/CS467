@@ -6,7 +6,7 @@ from google.cloud import datastore
 
 import os
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
 
 app = Flask(__name__)
 datastore_client = datastore.Client()

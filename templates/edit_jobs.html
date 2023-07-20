@@ -1,0 +1,50 @@
+<!-- jobs.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="table-container">
+    <h2 class="page-header">Jobs</h2>
+
+    <form class="data-form" style="display: none;">
+        <input type="text" id="job-input" placeholder="Enter a job">
+        <button type="submit">Save</button>
+    </form>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Salary</th>
+                <th>Skills</th>
+                <th>Start Date</th>
+                <th>Contact</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" class="input-box" placeholder="Title"></td>
+                <td><input type="text" class="input-box" placeholder="Salary"></td>
+                <td><input type="text" class="input-box" placeholder="Skills"></td>
+                <td><input type="text" class="input-box" placeholder="Start Date"></td>
+                <td><input type="text" class="input-box" placeholder="Contact"></td>
+            </tr>
+            <!-- Add more job rows here -->
+        </tbody>
+    </table>
+
+    <div>
+        <td><button class="save-button" onclick="refreshPage()">Save</button></td>
+        <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+    </div>
+
+    <script>
+        function refreshPage() {
+            window.location.href = "{{ url_for('jobs') }}";
+        }
+    </script>
+
+{% endblock %}
+
+

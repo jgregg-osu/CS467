@@ -223,3 +223,8 @@ right: 0;
 margin-top: 10px;
 margin-right: 10px;
 }
+
+.save-button, .cancel-button {
+    background-color: #FF0000; /* Red color code */
+    /* Add any additional styles specific to the save button */
+}

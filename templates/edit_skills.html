@@ -1,0 +1,42 @@
+<!-- skills.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="table-container">
+    <h2 class="page-header">Skills</h2>
+   
+    <form class="data-form" style="display: none;">
+        <input type="text" id="job-input" placeholder="Enter a job">
+        <button type="submit">Save</button>
+    </form>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Skill</th>
+                <th>Required Jobs</th>
+                <th>Contact</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" class="input-box" placeholder="Skill"></td>
+                <td><input type="text" class="input-box" placeholder="Required Jobs"></td>
+                <td><input type="text" class="input-box" placeholder="Contact"></td>
+            </tr>
+            <!-- Add more job rows here -->
+        </tbody>
+    </table>
+    
+    <div>
+        <td><button class="save-button" onclick="refreshPage()">Save</button></td>
+        <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+    </div>
+
+    <script>
+        function refreshPage() {
+            window.location.href = "{{ url_for('skills') }}";
+        }
+    </script>
+
+{% endblock %}

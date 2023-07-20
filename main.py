@@ -6,7 +6,7 @@ from google.cloud import datastore
 
 import os
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
+#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
@@ -24,13 +24,25 @@ def instructions():
 def skills():
     return render_template('skills.html')
 
+@app.route('/edit_skills')
+def edit_skills():
+    return render_template('edit_skills.html')
+
 @app.route('/jobs')
 def jobs():
     return render_template('jobs.html')
 
+@app.route('/edit_jobs')
+def edit_jobs():
+    return render_template('edit_jobs.html')
+
 @app.route('/contacts')
 def contacts():
     return render_template('contacts.html')
+
+@app.route('/edit_contacts')
+def edit_contacts():
+    return render_template('edit_contacts.html')
 
 
 def store_time(dt):

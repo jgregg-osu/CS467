@@ -58,7 +58,7 @@ def authorized():
         return f'Failed to decode the Google ID token: {e}'
 
     session['user'] = user_id
-    return redirect(url_for('jobs'))
+    return redirect(url_for('skills'))
 
 @google.tokengetter
 def get_google_oauth_token():
@@ -106,33 +106,6 @@ def edit_contacts():
 def listings():
     if not verify_logged_in():
         return logout()
-   
-  
-
-    url = "https://901522ec-fa4d-4b63-aecc-a237dc24ac90.mock.pstmn.io/jobs"
-
-    # Set the query parameters
-    query_params = {
-        "title": "massage therapist",
-        "location": "New Hampshire"
-    }
-
-    # Make the GET request with query parameters
-    response = requests.get(url, params=query_params)
-
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Parse the JSON response
-        job_data = response.json()
-        return job_data
-        # Process the job data as needed
-        for job in job_data:
-            print(f"Job Title: {job['title']}")
-            print(f"Company: {job['company']}")
-            print(f"Location: {job['location']}")
-            print("----")
-    else:
-        print(f"Failed to fetch jobs. Status code: {response.status_code}")
 
     return render_template('listings.html')
 

@@ -1,22 +1,11 @@
-import datetime
-
-from flask import Flask, redirect, url_for, session, render_template
-
+from flask import Flask, redirect, url_for, session, render_template, request
 from flask_oauthlib.client import OAuth
-
 from google.cloud import datastore
-
 import requests
-
 import os
-
 import jwt
 #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
 
-from flask import Flask, session, request, redirect, url_for
-import os
-from google.cloud import datastore
-from flask_oauthlib.client import OAuth
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
@@ -69,15 +58,11 @@ def authorized():
         return f'Failed to decode the Google ID token: {e}'
 
     session['user'] = user_id
-    print(session.get('user'))
-    print(True)
     return redirect(url_for('jobs'))
 
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('user')
-
-
 
 @app.route('/')
 def index():
@@ -117,17 +102,16 @@ def contacts():
 def edit_contacts():
     return render_template('edit_contacts.html')
 
-def verify_logged_in():
-    if 'user' in session:
-        return True
-    return False
-
 @app.route('/listings')
 def listings():
     if not verify_logged_in():
         return logout()
     return render_template('listings.html')
 
+def verify_logged_in():
+    if 'user' in session:
+        return True
+    return False
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

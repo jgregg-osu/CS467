@@ -171,6 +171,7 @@ th, td {
   }
 
   .popup {
+    text-align: left;
     position: fixed;
     top: 20px;
     right: 20px;
@@ -181,9 +182,7 @@ th, td {
     display: none;
   }
   
-  .popup button {
-    float: right;
-  }
+  
 
   .logout-btn {
     position: absolute;

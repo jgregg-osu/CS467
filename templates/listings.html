@@ -1,0 +1,95 @@
+<!-- jobs.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<form action="/login" method="post">
+    <label for="location">location:</label>
+    <input type="text" id="location" name="username" required>
+    <br>
+    <label for="keywords">keywords:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">go</button>
+</form>
+
+<h1>Job Search</h1>
+    <form id="job-search-form">
+        <label for="job-title">Job Title:</label>
+        <input type="text" id="job-title" name="job_title" required><br>
+
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location" required><br>
+
+        <label for="keywords">Keywords:</label>
+        <input type="text" id="keywords" name="keywords" required><br>
+
+        <input type="submit" value="Search">
+    </form>
+
+    <div id="results">
+        <table id="job-listings">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Location</th>
+                    <th>Company</th>
+                    <th>Salary</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- The search results will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.getElementById("job-search-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const jobTitle = formData.get("job_title");
+            const location = formData.get("location");
+            const keywords = formData.get("keywords");
+
+            // Make an AJAX request to the Flask backend to fetch the job listings
+            fetch("/search", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const jobListings = data.job_listings;
+                const tableBody = document.getElementById("job-listings").querySelector("tbody");
+
+                // Clear existing table rows
+                tableBody.innerHTML = "";
+
+                // Populate the table with the job listings
+                jobListings.forEach(listing => {
+                    const row = document.createElement("tr");
+                    const titleCell = document.createElement("td");
+                    const locationCell = document.createElement("td");
+                    const companyCell = document.createElement("td");
+                    const salaryCell = document.createElement("td");
+
+                    titleCell.textContent = listing.title;
+                    locationCell.textContent = listing.location;
+                    companyCell.textContent = listing.company;
+                    salaryCell.textContent = listing.salary;
+
+                    row.appendChild(titleCell);
+                    row.appendChild(locationCell);
+                    row.appendChild(companyCell);
+                    row.appendChild(salaryCell);
+
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching job listings:", error);
+            });
+        });
+    </script>
+
+{% endblock %}

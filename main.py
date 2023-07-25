@@ -3,9 +3,8 @@ from flask_oauthlib.client import OAuth
 from google.cloud import datastore
 import requests
 import os
-import jwt
-#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
-
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
@@ -44,18 +43,18 @@ def authorized():
             request.args['error_description']
         )
 
-    # Decode the JWT to get the 'sub' value
-    id_token = response.get('id_token')
-    if id_token is None:
+    # Get the ID token from the response
+    id_token_response = response.get('id_token')
+    if id_token_response is None:
         return 'Failed to get the ID token from Google response.'
 
     try:
-        decoded_token = jwt.decode(id_token, options={"verify_signature": False})
-        user_id = decoded_token.get('sub')
+        id_info = id_token.verify_oauth2_token(id_token_response, google_requests.Request())
+        user_id = id_info.get('sub')
         if user_id is None:
             return 'Failed to get user information from Google ID token.'
-    except jwt.JWTError as e:
-        return f'Failed to decode the Google ID token: {e}'
+    except ValueError as e:
+        return f'Failed to decode and verify the Google ID token: {e}'
 
     session['user'] = user_id
     return redirect(url_for('skills'))
@@ -63,6 +62,8 @@ def authorized():
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('user')
+
+
 
 @app.route('/')
 def index():

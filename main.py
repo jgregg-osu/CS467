@@ -6,6 +6,8 @@ import os
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
+#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
+
 app = Flask(__name__)
 datastore_client = datastore.Client()
 app.secret_key = os.urandom(24)
@@ -63,8 +65,6 @@ def authorized():
 def get_google_oauth_token():
     return session.get('user')
 
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -97,7 +97,24 @@ def edit_jobs():
 def contacts():
     if not verify_logged_in():
         return logout()
-    return render_template('contacts.html')
+    user_id = request.args.get('user_id')
+
+    query = datastore.Query('contacts')
+    query.add_filter('id', '=', user_id)
+    #results = datastore.query(query)   # Bard failed here. ChatGPT had to save the day.
+    results = query.fetch()        
+
+    contacts = []
+    for contact in results:
+        contacts.append({
+            'name': contact['name'],
+            'company': contact['company'],
+            'title': contact['title'],
+            'phone': contact['phone'],
+            'email': contact['email'],
+        })
+    return render_template('contacts.html', user_data=user_data, contacts=contacts)
+    
 
 @app.route('/edit_contacts')
 def edit_contacts():

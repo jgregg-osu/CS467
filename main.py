@@ -1,15 +1,60 @@
-import datetime
+import datetime, google, os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 from google.cloud import datastore
-
-import os
 
 #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
+
+
+user_data = None
+
+
+
+
+
+
+
+
+
+
+# #!############################################
+# def login():
+#   """Logs in the user with their Google account."""
+
+#   credentials, project = google.auth.default()
+#   datastore_client = google.cloud.datastore.Client(project=project)
+
+#   user_id = credentials.id_token['sub']
+#   user_data = datastore_client.get(user_id)
+
+#   if user_data is None:
+#     return None
+
+#   return user_data
+
+# def create_account():
+#   """Creates a new account for the user."""
+
+#   credentials, project = google.auth.default()
+#   datastore_client = google.cloud.datastore.Client(project=project)
+
+#   user_id = credentials.id_token['sub']
+#   user_data = {
+#     'id': user_id,
+#     'email': credentials.id_token['email'],
+#     'name': credentials.id_token['name'],
+#   }
+
+#   datastore_client.put(user_data)
+
+#   return user_data
+#!############################################
+
+
 
 
 @app.route('/')
@@ -38,7 +83,23 @@ def edit_jobs():
 
 @app.route('/contacts')
 def contacts():
-    return render_template('contacts.html')
+    user_id = request.args.get('user_id')
+
+    query = datastore.Query('contacts')
+    query.add_filter('id', '=', user_id)
+    #results = datastore.query(query)   # Bard failed here. ChatGPT had to save the day.
+    results = query.fetch()        
+
+    contacts = []
+    for contact in results:
+        contacts.append({
+            'name': contact['name'],
+            'company': contact['company'],
+            'title': contact['title'],
+            'phone': contact['phone'],
+            'email': contact['email'],
+        })
+    return render_template('contacts.html', user_data=user_data, contacts=contacts)
 
 @app.route('/edit_contacts')
 def edit_contacts():

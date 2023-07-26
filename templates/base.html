@@ -10,6 +10,10 @@
 <body>
     <div class="container">
     <header>
+        <form action="/logout" method="post">
+            <input class="logout-btn" type="submit" value="Logout">
+        </form>
+
         <h1>Job Tracker</h1>
 
         <button class="popup-btn instructions-btn">Instructions</button>
@@ -34,6 +38,7 @@
             <li><a href="skills" {% if request.path == '/skills' %}class="active"{% endif %}>Skills</a></li>
             <li><a href="jobs" {% if request.path == '/jobs' %}class="active"{% endif %}>Jobs</a></li>
             <li><a href="contacts" {% if request.path == '/contacts' %}class="active"{% endif %}>Contacts</a></li>
+            <li><a href="listings" {% if request.path == '/listings' %}class="active"{% endif %}>Listings</a></li>
         </ul>
     </nav>
     <main>

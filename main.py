@@ -1,64 +1,72 @@
-import datetime, google, os
-
-from flask import Flask, render_template, request
-
+from flask import Flask, redirect, url_for, session, render_template, request
+from flask_oauthlib.client import OAuth
 from google.cloud import datastore
+import requests
+import os
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
+app.secret_key = os.urandom(24)
+oauth = OAuth(app)
 
+google = oauth.remote_app(
+    'google',
+    consumer_key='659922551489-fv356bauic9p6odg9t8hhlk75eg5ol83.apps.googleusercontent.com',
+    consumer_secret='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',
+    request_token_params={
+        'scope': 'email',
+    },
+    base_url='https://www.googleapis.com/oauth2/v1/',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+)
 
-user_data = None
+@app.route('/login', methods=['POST'])
+def login():
+    return google.authorize(callback=url_for('authorized', _external=True))
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('index'))
 
+@app.route('/login/authorized')
+def authorized():
+    response = google.authorized_response()
+    if response is None or response.get('access_token') is None:
+        return 'Access denied: reason={}, error={}'.format(
+            request.args['error_reason'],
+            request.args['error_description']
+        )
 
+    # Get the ID token from the response
+    id_token_response = response.get('id_token')
+    if id_token_response is None:
+        return 'Failed to get the ID token from Google response.'
 
+    try:
+        id_info = id_token.verify_oauth2_token(id_token_response, google_requests.Request())
+        user_id = id_info.get('sub')
+        if user_id is None:
+            return 'Failed to get user information from Google ID token.'
+    except ValueError as e:
+        return f'Failed to decode and verify the Google ID token: {e}'
 
+    session['user'] = user_id
+    return redirect(url_for('skills'))
 
-
-
-
-
-# #!############################################
-# def login():
-#   """Logs in the user with their Google account."""
-
-#   credentials, project = google.auth.default()
-#   datastore_client = google.cloud.datastore.Client(project=project)
-
-#   user_id = credentials.id_token['sub']
-#   user_data = datastore_client.get(user_id)
-
-#   if user_data is None:
-#     return None
-
-#   return user_data
-
-# def create_account():
-#   """Creates a new account for the user."""
-
-#   credentials, project = google.auth.default()
-#   datastore_client = google.cloud.datastore.Client(project=project)
-
-#   user_id = credentials.id_token['sub']
-#   user_data = {
-#     'id': user_id,
-#     'email': credentials.id_token['email'],
-#     'name': credentials.id_token['name'],
-#   }
-
-#   datastore_client.put(user_data)
-
-#   return user_data
-#!############################################
-
-
-
+@google.tokengetter
+def get_google_oauth_token():
+    return session.get('user')
 
 @app.route('/')
-def home():
+def index():
     return render_template('index.html')
 
 @app.route('/instructions')
@@ -67,6 +75,8 @@ def instructions():
 
 @app.route('/skills')
 def skills():
+    if not verify_logged_in():
+        return logout()
     return render_template('skills.html')
 
 @app.route('/edit_skills')
@@ -75,6 +85,8 @@ def edit_skills():
 
 @app.route('/jobs')
 def jobs():
+    if not verify_logged_in():
+        return logout()
     return render_template('jobs.html')
 
 @app.route('/edit_jobs')
@@ -83,6 +95,8 @@ def edit_jobs():
 
 @app.route('/contacts')
 def contacts():
+    if not verify_logged_in():
+        return logout()
     user_id = request.args.get('user_id')
 
     query = datastore.Query('contacts')
@@ -100,27 +114,23 @@ def contacts():
             'email': contact['email'],
         })
     return render_template('contacts.html', user_data=user_data, contacts=contacts)
+    
 
 @app.route('/edit_contacts')
 def edit_contacts():
     return render_template('edit_contacts.html')
 
+@app.route('/listings')
+def listings():
+    if not verify_logged_in():
+        return logout()
 
-def store_time(dt):
-    entity = datastore.Entity(key=datastore_client.key("visit"))
-    entity.update({"timestamp": dt})
+    return render_template('listings.html')
 
-    datastore_client.put(entity)
-
-
-def fetch_times(limit):
-    query = datastore_client.query(kind="visit")
-    query.order = ["-timestamp"]
-
-    times = query.fetch(limit=limit)
-
-    return times
-
+def verify_logged_in():
+    if 'user' in session:
+        return True
+    return False
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

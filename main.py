@@ -5,12 +5,17 @@ import requests
 import os
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+import constants
+import bcrypt
+from flask_bcrypt import Bcrypt
+import json
 
-#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../keys/job-tracker-app-392713-ac5aaa57e530.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
 app.secret_key = os.urandom(24)
+bcrypt = Bcrypt(app)
 oauth = OAuth(app)
 
 google = oauth.remote_app(
@@ -59,11 +64,83 @@ def authorized():
         return f'Failed to decode and verify the Google ID token: {e}'
 
     session['user'] = user_id
+
+    query = datastore_client.query(kind=constants.user)
+    users = list(query.fetch())
+    for user in users:
+        if user['id'] == user_id:
+            return redirect(url_for('skills'))
+
+    user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
+    user_entity['id'] = user_id
+    user_entity['skills'] = {}
+    user_entity['jobs'] = {}
+    user_entity['contacts'] = {}
+    datastore_client.put(user_entity)
+
     return redirect(url_for('skills'))
 
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('user')
+
+
+# Set the Referrer-Policy header for all responses
+@app.after_request
+def add_referrer_policy_header(response):
+    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
+    return response
+
+@app.route('/login-normal', methods=['GET', 'POST'])
+def loginNormal():
+    if request.method == 'POST':
+       
+        # The user has not signed in with Google, so we need to check for username and password
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        if username and password:
+            query = datastore_client.query(kind=constants.user)
+            users = list(query.fetch())
+            
+            for user in users:
+                if user['id'] == username:
+                   
+                    if bcrypt.check_password_hash(user['password'], password):
+                        session['user'] = username
+                        return redirect(url_for('skills'))
+                    else:
+                        # Incorrect password: show an error message
+                        error = "Incorrect password. Please try again."
+                        return render_template('index.html', error=error)
+                    
+    error = "Please enter both username and password."
+    return render_template('index.html', error=error)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        confirmedPassword = request.form['confirm-password']
+        if password != confirmedPassword:
+            return render_template('index.html')
+
+        # Hash the password using bcrypt (secure password hashing)
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        
+        user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
+        user_entity['id'] = username
+        user_entity['password'] = hashed_password
+        user_entity['skills'] = {}
+        user_entity['jobs'] = {}
+        user_entity['contacts'] = {}
+        datastore_client.put(user_entity)
+
+        session['user'] = username
+        return redirect('/skills')
+
+    return render_template('index.html')
 
 @app.route('/')
 def index():
@@ -75,6 +152,11 @@ def instructions():
 
 @app.route('/skills')
 def skills():
+    query = datastore_client.query(kind=constants.user)
+    users = list(query.fetch())
+    for user in users:
+        print(user.key.id)
+        print(False)
     if not verify_logged_in():
         return logout()
     return render_template('skills.html')
@@ -131,6 +213,14 @@ def verify_logged_in():
     if 'user' in session:
         return True
     return False
+
+@app.route('/alldata')
+def alldata():
+    query = datastore_client.query(kind=constants.user)
+    users = list(query.fetch())
+    json_data = json.dumps(users)
+
+    return json_data
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

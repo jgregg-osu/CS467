@@ -3,6 +3,25 @@
 <head>
   <title>Job Tracker - Login</title>
   <link rel="stylesheet" href="static/style.css">
+  <style>
+    /* Add custom styles for buttons */
+    .form-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .submit-BTN {
+      border: none;
+      background-color: green;
+      color: white;
+      width: auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 
 <body>
@@ -15,8 +34,42 @@
 
     <main>
     
-      <h2 id="login-heading">Login</h2>
-      
+      <div id="login-form">
+        <h2 id="login-heading">Login</h2>
+        <form action="/login-normal" method="POST">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required><br>
+
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required><br>
+
+          <div class="form-buttons">
+            <input class='submit-BTN' type="submit" value="Login">
+            <button class='submit-BTN' type="button" onclick="toggleForms()">Register</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="register-form" style="display: none;">
+        <h2 id="login-heading">Register</h2>
+        <form method="post" action="/register">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required><br>
+
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required><br>
+
+          <label for="confirm-password">Confirm Password:</label>
+          <input type="password" id="confirm-password" name="confirm-password" required><br>
+
+
+          <div class="form-buttons">
+            <input class='submit-BTN' type="submit" value="Register">
+            <button class='submit-BTN' type="button" onclick="toggleForms()">Login</button>
+          </div>
+        </form>
+      </div>
+
       <form action="/login" method="post">
         <button type="submit">Google Log In</button>
       </form>
@@ -27,6 +80,21 @@
     </main>
 
   </div>
+
+  <script>
+    function toggleForms() {
+      var loginForm = document.getElementById("login-form");
+      var registerForm = document.getElementById("register-form");
+
+      if (loginForm.style.display === "none") {
+        loginForm.style.display = "block";
+        registerForm.style.display = "none";
+      } else {
+        loginForm.style.display = "none";
+        registerForm.style.display = "block";
+      }
+    }
+  </script>
 
 </body>
 </html>

@@ -1,14 +1,8 @@
-<!-- jobs.html -->
 {% extends "base.html" %}
 
 {% block content %}
     <div class="table-container">
     <h2 class="page-header">Jobs</h2>
-
-    <form class="data-form" style="display: none;">
-        <input type="text" id="job-input" placeholder="Enter a job">
-        <button type="submit">Save</button>
-    </form>
 
     <table class="data-table">
         <thead>
@@ -24,27 +18,55 @@
         </thead>
         <tbody>
             <tr>
-                <td><input type="text" class="input-box" placeholder="Title"></td>
-                <td><input type="text" class="input-box" placeholder="Salary"></td>
-                <td><input type="text" class="input-box" placeholder="Skills"></td>
-                <td><input type="text" class="input-box" placeholder="Start Date"></td>
-                <td><input type="text" class="input-box" placeholder="Contact"></td>
+                <form action="/saveJobEdit" method="post" enctype="multipart/form-data">
+                    <!-- Add a hidden input field for index -->
+                    <input type="hidden" name="index" value="{{ index }}">
+                    <td><input type="text" class="input-box" name="title" value="{{ job.title }}" placeholder="{{ job.title }}"></td>
+                    <td><input type="text" class="input-box" name="salary" value="{{ job.salary }}" placeholder="{{ job.salary }}"></td>
+                    <td><input type="text" class="input-box" name="skills" value="{{ job.skills }}" placeholder="{{ job.skills }}"></td>
+                    <td><input type="text" class="input-box" name="start_date" value="{{ job.start_date }}" placeholder="{{ job.start_date }}"></td>
+                    <td><input type="text" class="input-box" name="contact" value="{{ job.contact }}" placeholder="{{ job.contact }}"></td>
+                    <td><button type="submit" class="save-button">Save</button></td>
+                    <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+                </form>
+                
             </tr>
-            <!-- Add more job rows here -->
+            
         </tbody>
     </table>
 
-    <div>
-        <td><button class="save-button" onclick="refreshPage()">Save</button></td>
-        <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
-    </div>
-
     <script>
-        function refreshPage() {
+    function saveJob() {
+        // Get the form data
+        const formElements = document.querySelectorAll("tbody tr:first-child input");
+        const formData = {};
+        formElements.forEach(input => {
+            formData[input.getAttribute("placeholder")] = input.value || input.getAttribute("placeholder");
+        });
+
+        // Send the form data to the /saveJobEdit route
+        fetch("/saveJobEdit", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Job saved successfully:");
+            // Redirect to the /jobs route after saving the job
             window.location.href = "{{ url_for('jobs') }}";
-        }
+        })
+        .catch(error => {
+            console.error("Error saving job:", error);
+        });
+    }
+
+    function refreshPage() {
+            window.location.href = "{{ url_for('jobs') }}";
+    }
+    
     </script>
 
 {% endblock %}
-
-

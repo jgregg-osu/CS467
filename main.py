@@ -6,9 +6,9 @@ import os
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 import constants
-import bcrypt
 from flask_bcrypt import Bcrypt
 import json
+import uuid
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
 
@@ -34,14 +34,20 @@ google = oauth.remote_app(
 
 @app.route('/login', methods=['POST'])
 def login():
-    return google.authorize(callback=url_for('authorized', _external=True))
+    if request.method == 'POST':
+        return google.authorize(callback=url_for('authorized', _external=True))
+    else:
+        return render_template('index.html')
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('user', None)
-    return redirect(url_for('index'))
+    if request.method == 'POST':
+        session.pop('user', None)
+        return redirect(url_for('index'))
+    else:
+        render_template('index.html')
 
-@app.route('/login/authorized')
+@app.route('/login/authorized', methods=['POST', 'GET'])
 def authorized():
     response = google.authorized_response()
     if response is None or response.get('access_token') is None:
@@ -73,9 +79,9 @@ def authorized():
 
     user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
     user_entity['id'] = user_id
-    user_entity['skills'] = {}
-    user_entity['jobs'] = {}
-    user_entity['contacts'] = {}
+    user_entity['skills'] = []
+    user_entity['jobs'] = []
+    user_entity['contacts'] = []
     datastore_client.put(user_entity)
 
     return redirect(url_for('skills'))
@@ -91,7 +97,7 @@ def add_referrer_policy_header(response):
     response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
     return response
 
-@app.route('/login-normal', methods=['GET', 'POST'])
+@app.route('/login-normal', methods=['POST'])
 def loginNormal():
     if request.method == 'POST':
        
@@ -132,15 +138,15 @@ def register():
         user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
         user_entity['id'] = username
         user_entity['password'] = hashed_password
-        user_entity['skills'] = {}
-        user_entity['jobs'] = {}
-        user_entity['contacts'] = {}
+        user_entity['skills'] = []
+        user_entity['jobs'] = []
+        user_entity['contacts'] = []
         datastore_client.put(user_entity)
 
         session['user'] = username
         return redirect('/skills')
-
-    return render_template('index.html')
+    else:
+        return render_template('index.html')
 
 @app.route('/')
 def index():
@@ -152,11 +158,6 @@ def instructions():
 
 @app.route('/skills')
 def skills():
-    query = datastore_client.query(kind=constants.user)
-    users = list(query.fetch())
-    for user in users:
-        print(user.key.id)
-        print(False)
     if not verify_logged_in():
         return logout()
     return render_template('skills.html')
@@ -165,15 +166,95 @@ def skills():
 def edit_skills():
     return render_template('edit_skills.html')
 
-@app.route('/jobs')
+@app.route('/jobs', methods=['GET'])
 def jobs():
-    if not verify_logged_in():
-        return logout()
-    return render_template('jobs.html')
+    if request.method == 'GET':
+        if not verify_logged_in():
+            return logout()
+        user = getUser()
+        jobs = user['jobs']
+        return render_template('jobs.html', jobs=jobs)
+    else:
+        render_template('index.html')
 
-@app.route('/edit_jobs')
+@app.route('/savejob', methods=['POST'])
+def savejob():
+    if request.method == 'POST':
+        job_data = request.get_json()
+        title = job_data.get('Title')
+        salary = job_data.get('Salary')
+        skills = job_data.get('Skills')
+        start_date = job_data.get('Start Date')
+        contact = job_data.get('Contact')
+
+        user = getUser()
+
+        user['jobs'].append({
+        'title': title,
+        'salary': salary,
+        'skills': skills,
+        'start_date': start_date,
+        'contact': contact
+        })
+        datastore_client.put(user)
+    
+        return ('successfully created', 201)
+    else:
+        return ({'Error': 'Job not created'}, 400)
+
+@app.route('/deletejob', methods=['POST'])
+def delete_job():
+    if request.method == 'POST':
+        # Get the job ID from the request body
+        data = request.get_json()
+        index = int(data.get('index'))
+        if index is None:
+            return ({"error": "Job not provided"}, 400)
+        # Delete the job from the Datastore
+        user = getUser()
+        user['jobs'].pop(index)
+        datastore_client.put(user)
+
+        return ('', 204)
+    else:
+        return ({'Error': 'Delete unsuccesful'}, 400)
+
+@app.route('/edit_jobs', methods=['GET'])
 def edit_jobs():
-    return render_template('edit_jobs.html')
+    if request.method == 'GET':
+        index = int(request.args.get('index'))
+        user = getUser()
+        job = user['jobs'][index]
+        return render_template('edit_jobs.html', job=job, index=index)
+    else:
+        render_template('jobs.html')
+
+@app.route('/saveJobEdit', methods=['POST'])
+def saveJobEdit():
+    if request.method == 'POST':
+        # Get the form data from the request
+        index = int(request.form.get('index', -1))  # Default value of -1 if 'index' is not found
+        title = request.form['title']
+        salary = request.form['salary']
+        skills = request.form['skills']
+        start_date = request.form['start_date']
+        contact = request.form['contact']
+
+        # Update the job in the jobs list if the index is valid
+        if index >= 0:
+            user = getUser()
+            jobs = user['jobs']
+            if index < len(jobs):
+                jobs[index]['title'] = title
+                jobs[index]['salary'] = salary
+                jobs[index]['skills'] = skills
+                jobs[index]['start_date'] = start_date
+                jobs[index]['contact'] = contact
+                datastore_client.put(user)
+
+        return render_template('jobs.html', jobs=user['jobs'])
+    else:
+        return render_template('index.html')
 
 @app.route('/contacts')
 def contacts():
@@ -214,13 +295,13 @@ def verify_logged_in():
         return True
     return False
 
-@app.route('/alldata')
-def alldata():
+def getUser():
     query = datastore_client.query(kind=constants.user)
+    query.add_filter('id', '=', session.get('user'))
     users = list(query.fetch())
-    json_data = json.dumps(users)
+    user = users[0]
+    return user
 
-    return json_data
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

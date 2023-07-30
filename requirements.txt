@@ -3,3 +3,4 @@ google-cloud-datastore==2.15.1
 Flask-OAuthlib
 requests
 bcrypt
+flask_bcrypt

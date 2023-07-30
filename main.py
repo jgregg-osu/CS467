@@ -9,6 +9,7 @@ import constants
 from flask_bcrypt import Bcrypt
 import json
 import uuid
+import skills_module
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
 
@@ -41,11 +42,8 @@ def login():
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    if request.method == 'POST':
         session.pop('user', None)
         return redirect(url_for('index'))
-    else:
-        render_template('index.html')
 
 @app.route('/login/authorized', methods=['POST', 'GET'])
 def authorized():
@@ -160,7 +158,43 @@ def instructions():
 def skills():
     if not verify_logged_in():
         return logout()
-    return render_template('skills.html')
+    sorted_job_skills = get_job_skills()
+
+    return render_template('skills.html', job_skills=sorted_job_skills)
+
+def get_job_skills():
+    """gets all skills required for jobs and compiles array of dictioaries
+    holding each skill with a percentage of jobs its used for and if the user
+    has learned the skill or not"""
+    user = getUser()
+    jobs = user['jobs']
+    skills = user['skills']
+    skills_array = []
+    for skill in skills:
+        skills_array.append(skill['skill'])
+    skills_for_jobs_dict = {}
+    skills_added = []
+    total_jobs = 0
+    for job in jobs:
+        total_jobs += 1
+        job_skills = job['skills']
+        for skill in job_skills:
+            if skill in skills_added:
+                skills_for_jobs_dict[skill] += 1
+            else:
+                skills_for_jobs_dict[skill] = 1
+            skills_added.append(skill)
+    # have dict with each skill and number of jobs it appears in
+    display_skills_array = []
+    for skill, count in skills_for_jobs_dict.items():
+        percentage = str(int((count / total_jobs) * 100)) + "%"
+        learned = (skill in skills_array)
+        skill_display = {'skill': skill, 'percentage': percentage, 'count': count, 'learned': learned}
+        display_skills_array.append(skill_display)
+    # display set not sorted
+    sorted_job_skills = sorted(display_skills_array, key=lambda x: x['count'], reverse=True)
+
+    return sorted_job_skills
 
 @app.route('/edit_skills')
 def edit_skills():
@@ -168,12 +202,14 @@ def edit_skills():
 
 @app.route('/jobs', methods=['GET'])
 def jobs():
-    if request.method == 'GET':
-        if not verify_logged_in():
+    if not verify_logged_in():
             return logout()
+    if request.method == 'GET':
         user = getUser()
         jobs = user['jobs']
-        return render_template('jobs.html', jobs=jobs)
+        skills = skills_module.skills
+        skills_json = json.dumps(skills)
+        return render_template('jobs.html', jobs=jobs, skills=skills_json)
     else:
         render_template('index.html')
 

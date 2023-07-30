@@ -14,28 +14,20 @@
         <thead>
             <tr>
                 <th>Skill</th>
-                <th>Required Jobs</th>
-                <th>Contact</th>
-                <th>Edit</th>
-                <th>Delete</th>
+                <th>% of Jobs</th>
+                <th>Total Jobs</th>
+                <th>Learned</th>
             </tr>
         </thead>
         <tbody>
+            {% for skill in job_skills %}
             <tr>
-                <td>Pogo Sticking</td>
-                <td>Enron</td>
-                <td>Ron Trompson</td>
-                <td><button class="edit-button" onclick="navigateToEditSkillsPage()">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete()">Delete</button></td>
+                <td>{{ skill.skill }}</td>
+                <td>{{ skill.percentage }}</td>
+                <td>{{ skill.count }}</td>
+                <td>{{ skill.learned }}</td>
             </tr>
-            <tr>
-                <td>Data Analytics</td>
-                <td>North Korean Stock Exchange</td>
-                <td>Bill Johnson</td>
-                <td><button class="edit-button" onclick="navigateToEditSkillsPage()">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete()">Delete</button></td>
-            </tr>
-            <!-- Add more job rows here -->
+            {% endfor %}
         </tbody>
     </table>
     

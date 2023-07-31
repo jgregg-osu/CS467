@@ -10,6 +10,7 @@ from flask_bcrypt import Bcrypt
 import json
 import uuid
 import skills_module
+import ast
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
 
@@ -171,7 +172,7 @@ def get_job_skills():
     skills = user['skills']
     skills_array = []
     for skill in skills:
-        skills_array.append(skill['skill'])
+        skills_array.append(skill['skill_name'].lower())
     skills_for_jobs_dict = {}
     skills_added = []
     total_jobs = 0
@@ -179,11 +180,11 @@ def get_job_skills():
         total_jobs += 1
         job_skills = job['skills']
         for skill in job_skills:
-            if skill in skills_added:
+            if skill.lower() in skills_added:
                 skills_for_jobs_dict[skill] += 1
             else:
                 skills_for_jobs_dict[skill] = 1
-            skills_added.append(skill)
+            skills_added.append(skill.lower())
     # have dict with each skill and number of jobs it appears in
     display_skills_array = []
     for skill, count in skills_for_jobs_dict.items():
@@ -261,20 +262,24 @@ def edit_jobs():
         index = int(request.args.get('index'))
         user = getUser()
         job = user['jobs'][index]
-        return render_template('edit_jobs.html', job=job, index=index)
+        skills = skills_module.skills
+        skills_json = json.dumps(skills)
+        selected_skills = job['skills']
+       
+        return render_template('edit_jobs.html', job=job, index=index, skills=skills_json, selected_skills=selected_skills)
     else:
         render_template('jobs.html')
 
 @app.route('/saveJobEdit', methods=['POST'])
 def saveJobEdit():
     if request.method == 'POST':
-        # Get the form data from the request
-        index = int(request.form.get('index', -1))  # Default value of -1 if 'index' is not found
-        title = request.form['title']
-        salary = request.form['salary']
-        skills = request.form['skills']
-        start_date = request.form['start_date']
-        contact = request.form['contact']
+        index = int(request.form.get('index'))
+        title = request.form.get('title')
+        salary = request.form.get('salary')
+        skills = ast.literal_eval(request.form.get('skills'))
+        start_date = request.form.get('start_date')
+        contact = request.form.get('contacts')
+       
 
         # Update the job in the jobs list if the index is valid
         if index >= 0:

@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="table-container">
-    <h2 class="page-header">Skills</h2>
+    <h2 class="page-header">In Demand Skills</h2>
    
     <form class="data-form" style="display: none;">
         <input type="text" id="job-input" placeholder="Enter a job">
@@ -25,16 +25,20 @@
                 <td>{{ skill.skill }}</td>
                 <td>{{ skill.percentage }}</td>
                 <td>{{ skill.count }}</td>
-                <td>{{ skill.learned }}</td>
+                <td>
+                    {% if skill.learned %}
+                        <span style="color: green;">&#x2714;</span>  <!-- Green checkmark -->
+                    {% else %}
+                        <span style="color: red;">&#x2718;</span>  <!-- Red X -->
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     
-    <div class="add-container">
-        <h3>Add Skill</h3>
-        <button class="add-data-button" onclick="addNewSkill()">+</button>
-    </div>
+    </table>
+    
     </div>
 
     <script>

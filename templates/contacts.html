@@ -32,12 +32,11 @@
                 {% endfor %}
             </tbody>
         </table>
-        <!-- Your existing buttons go here -->
         <div class="add-container">
-            <h3>Add Skill</h3>
+            <h3>Add Contact</h3>
             <button class="add-data-button" onclick="addNewContact()">+</button>
         </div>
-
+        <!-- Your existing buttons go here -->
     </div>
 
     <script>
@@ -68,16 +67,46 @@
             // JavaScript code to add a new row with text boxes to the table
             const newRow = document.createElement("tr");
             newRow.innerHTML = `
-                <td><input type="text" class="input-box" placeholder="Name"></td>
-                <td><input type="text" class="input-box" placeholder="Company"></td>
-                <td><input type="text" class="input-box" placeholder="Job Title"></td>
-                <td><input type="text" class="input-box" placeholder="Phone"></td>
-                <td><input type="text" class="input-box" placeholder="Email"></td>
-                <td><button class="save-button" onclick="refreshPage()">Save</button></td>
+                <td><input type="text" id='name' class="input-box" placeholder="Name"></td>
+                <td><input type="text" id='company' class="input-box" placeholder="Company"></td>
+                <td><input type="text" id='title' class="input-box" placeholder="Job Title"></td>
+                <td><input type="text" id='phone' class="input-box" placeholder="Phone"></td>
+                <td><input type="text" id='email' class="input-box" placeholder="Email"></td>
+                <td><button class="save-button" onclick="saveContact()">Save</button></td>
                 <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
             `;
             document.querySelector("tbody").appendChild(newRow);
         }
+
+        function saveContact() {
+            // Get the form data
+            const formElements = document.querySelectorAll("tbody tr:last-child input");
+            const formData = {};
+
+            formElements.forEach(input => {
+                const fieldName = input.id; // Use the input's ID as the field name
+                formData[fieldName] = input.value;
+            });
+
+            // Send the form data to the /saveContact route
+            fetch("/saveContact", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            })
+            .then((result) => {
+                console.log("Contact saved successfully:");
+                // Reload the page after saving the contact
+                refreshPage(); // This will refresh the page
+            })
+            .catch(error => {
+                console.error("Error saving contact:", error);
+            });
+        }
+
+
 
         function refreshPage() {
             window.location.href = "{{ url_for('contacts') }}";

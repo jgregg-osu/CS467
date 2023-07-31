@@ -209,6 +209,38 @@ def contacts():
     return render_template('contacts.html', user_entity=user_entity)
     
 
+# @app.route('/add_contacts', methods=['POST'])
+# def add_contacts():
+#     return 'works'
+#     return render_template('contacts.html')
+
+@app.route('/saveContact', methods=['POST'])
+def saveContact():
+    if request.method == 'POST':
+        contact_data = request.get_json()
+        name = contact_data.get('name')
+        company = contact_data.get('company')
+        title = contact_data.get('title')
+        phone = contact_data.get('phone')
+        email = contact_data.get('email')
+
+        user = getUser()
+
+        user['contacts'].append({
+        'name': name,
+        'company': company,
+        'title': title,
+        'phone': phone,
+        'email': email,
+        })
+        datastore_client.put(user)
+    
+        return ('successfully created', 201)
+    else:
+        return ({'Error': 'Contact not created'}, 400)
+
+
+
 @app.route('/edit_contacts')
 def edit_contacts():
     return render_template('edit_contacts.html')
@@ -234,6 +266,14 @@ def alldata():
     json_data = json.dumps(users)
     return json_data
 
+
+
+def getUser():
+    query = datastore_client.query(kind=constants.user)
+    query.add_filter('id', '=', session.get('user'))
+    users = list(query.fetch())
+    user = users[0]
+    return user
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

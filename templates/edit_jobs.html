@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <style>
+
     .data-table tbody tr td {
     vertical-align: top;
 }
 </style>
 
-<div class="table-container">
+    <div class="table-container">
     <h2 class="page-header">Jobs</h2>
     <form action="/saveJobEdit" method="POST">
         <!-- Add a hidden input field to hold the selected items -->
@@ -46,17 +48,17 @@
             </tbody>
         </table>
     </form>
-</div>
-    <script>
+    </div>
 
-window.addEventListener('DOMContentLoaded', function() {
-    updateSkillsInput();
-});
+<script>
 
-function updateSkillsInput() {
-    document.getElementById('skillsInput').value = JSON.stringify(selectedItems);
-}
+    window.addEventListener('DOMContentLoaded', function() {
+        updateSkillsInput();
+    });
 
+    function updateSkillsInput() {
+        document.getElementById('skillsInput').value = JSON.stringify(selectedItems);
+    }
    
     document.querySelector('form').addEventListener('submit', function (event) {
         document.getElementById('skillsInput').value = JSON.stringify(selectedItems);
@@ -72,72 +74,65 @@ function updateSkillsInput() {
     displaySelectedItems();
     console.log(selectedItems);
 
-        // Attach the oninput event to the input element
-        document.getElementById("item-input").addEventListener("input", function () {
-            updateDropDown(this.value);
-        });
+    // Attach the oninput event to the input element
+    document.getElementById("item-input").addEventListener("input", function () {
+        updateDropDown(this.value);
+    });
 
-        function updateDropDown(enteredText) {
-    const suggestedItemsContainer = document.getElementById("suggested-items-container");
-    const inputBox = document.getElementById("item-input");
-
-    if (enteredText) {
-        // If the user has typed something, show the suggested items and update the options
-        suggestedItemsContainer.style.display = "block";
-        updateSuggestedItems(enteredText);
-    } else {
-        // If the user has cleared the input, hide the suggested items
-        suggestedItemsContainer.style.display = "none";
+    function updateDropDown(enteredText) {
+        const suggestedItemsContainer = document.getElementById("suggested-items-container");
+        const inputBox = document.getElementById("item-input");
+        if (enteredText) {
+            // If the user has typed something, show the suggested items and update the options
+            suggestedItemsContainer.style.display = "block";
+            updateSuggestedItems(enteredText);
+        } else {
+            // If the user has cleared the input, hide the suggested items
+            suggestedItemsContainer.style.display = "none";
+        }
     }
-}
-
-
     
-        function updateSuggestedItems(enteredText) {
-            const suggestedItemsContainer = document.getElementById("suggested-items-container");
-            const filteredItems = items.filter(item => item.toLowerCase().includes(enteredText.toLowerCase()));
-            const maxSuggestions = 3; // Limit the suggestions to 3
-            const optionsHTML = filteredItems.slice(0, maxSuggestions).map(item => {
-                return `<div class="suggested-item" onclick="addItemToSelectedItems('${item}')">${item}</div>`;
-            }).join('');
-            suggestedItemsContainer.innerHTML = optionsHTML;
-        }
+    function updateSuggestedItems(enteredText) {
+        const suggestedItemsContainer = document.getElementById("suggested-items-container");
+        const filteredItems = items.filter(item => item.toLowerCase().includes(enteredText.toLowerCase()));
+        const maxSuggestions = 3; // Limit the suggestions to 3
+        const optionsHTML = filteredItems.slice(0, maxSuggestions).map(item => {
+            return `<div class="suggested-item" onclick="addItemToSelectedItems('${item}')">${item}</div>`;
+        }).join('');
+        suggestedItemsContainer.innerHTML = optionsHTML;
+    }
 
-        function addItemToSelectedItems(item) {
-    // Add the item to the selectedItems array
-    selectedItems.push(item);
-    // Clear the input
-    document.getElementById("item-input").value = "";
-    // Hide the suggested items
-    const suggestedItemsContainer = document.getElementById("suggested-items-container");
-    suggestedItemsContainer.style.display = "none";
-    // Display the selected items
-    displaySelectedItems();
-    updateSkillsInput();
-}
+    function addItemToSelectedItems(item) {
+        // Add the item to the selectedItems array
+        selectedItems.push(item);
+        // Clear the input
+        document.getElementById("item-input").value = "";
+        // Hide the suggested items
+        const suggestedItemsContainer = document.getElementById("suggested-items-container");
+        suggestedItemsContainer.style.display = "none";
+        // Display the selected items
+        displaySelectedItems();
+        updateSkillsInput();
+    }
 
+    function displaySelectedItems() {
+        const selectedItemsContainer = document.getElementById("selected-items-container");
+        selectedItemsContainer.innerHTML = selectedItems.map(item => `
+            <div class="selected-item">
+                <button class="remove-item-button" id='removeItemButton' onclick="removeItem('${item}')">x</button>
+                <span>${item}</span>
+            </div>
+        `).join('');
+    }
 
-function displaySelectedItems() {
-    const selectedItemsContainer = document.getElementById("selected-items-container");
-    selectedItemsContainer.innerHTML = selectedItems.map(item => `
-        <div class="selected-item">
-            <button class="remove-item-button" id='removeItemButton' onclick="removeItem('${item}')">x</button>
-            <span>${item}</span>
-        </div>
-    `).join('');
-}
-
-
-
-        function removeItem(item) {
-            // Remove the item from the selectedItems array
-            selectedItems = selectedItems.filter(selectedItem => selectedItem !== item);
-            // Display the updated list of selected items
-            displaySelectedItems();
-            updateSkillsInput();
-        }
-
+    function removeItem(item) {
+        // Remove the item from the selectedItems array
+        selectedItems = selectedItems.filter(selectedItem => selectedItem !== item);
+        // Display the updated list of selected items
+        displaySelectedItems();
+        updateSkillsInput();
+    }
     
-    </script>
+</script>
 
 {% endblock %}

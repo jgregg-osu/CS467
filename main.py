@@ -8,9 +8,9 @@ from google.oauth2 import id_token
 import constants
 from flask_bcrypt import Bcrypt
 import json
-import uuid
+
 import skills_module
-import ast
+#import ast
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
 
@@ -276,10 +276,9 @@ def saveJobEdit():
         index = int(request.form.get('index'))
         title = request.form.get('title')
         salary = request.form.get('salary')
-        skills = ast.literal_eval(request.form.get('skills'))
+        skills = json.loads(request.form.get('skills'))
         start_date = request.form.get('start_date')
         contact = request.form.get('contacts')
-       
 
         # Update the job in the jobs list if the index is valid
         if index >= 0:

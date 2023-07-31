@@ -73,7 +73,7 @@ def authorized():
         if user['id'] == user_id:
             # return f"users: {json.dumps(user, indent=2)}, user['id]: {str(user['id'])}, user_id: {str(user_id)}"
             # return 'Can you see this?'
-            return redirect(url_for('contacts'))
+            return redirect(url_for('skills'))
     user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
     user_entity['id'] = user_id
     user_entity['skills'] = []
@@ -81,7 +81,7 @@ def authorized():
     user_entity['contacts'] = []
     datastore_client.put(user_entity)
     # return 'Can you see this? 2'
-    return redirect(url_for('contacts'))
+    return redirect(url_for('skills'))
 
 
 @google.tokengetter

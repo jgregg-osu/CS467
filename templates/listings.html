@@ -27,6 +27,7 @@
         <input type="submit" value="Search">
     </form>
 
+    {% if results|length > 0 %}
     <div id="results">
         <table id="job-listings" class="data-table">
             <thead>
@@ -50,5 +51,6 @@
             </tbody>
         </table>
     </div>  
+    {% endif %}
 
 {% endblock %}

@@ -323,12 +323,43 @@ def contacts():
 def edit_contacts():
     return render_template('edit_contacts.html')
 
-@app.route('/listings')
+@app.route('/listings', methods=['GET', 'POST'])
 def listings():
     if not verify_logged_in():
         return logout()
-
-    return render_template('listings.html')
+    if request.method == 'GET':
+        return render_template('listings.html', results=[])
+    elif request.method == 'POST':
+        ################################
+        # app id
+        # app key
+        ###############################
+        url = "http://api.adzuna.com:80/v1/api/jobs/us/search/1"
+        jobTitle = request.form.get("job-title")
+        location = request.form.get("location")
+        params = {
+            "app_id": app_id,
+            "app_key": app_key,
+            "results_per_page": 10,
+            "what": jobTitle,
+            "where": location,
+            "sort_by": "salary",
+            "content-type": "application/json"
+        }
+        response = requests.get(url, params=params)
+        data = response.json()
+        job_listings = []
+        for job in data.get("results", []):
+            average_salary = (job.get("salary_min", 0) + job.get("salary_max", 0)) / 2
+            job_listings.append({
+                "title": job.get("title", ""),
+                "location": job.get("location", {}).get("display_name", ""),
+                "company": job.get("company", {}).get("display_name", ""),
+                "average_salary": average_salary
+            })
+        return render_template('listings.html', results=job_listings)
+    else:
+        return render_template('index.html')
 
 def verify_logged_in():
     if 'user' in session:

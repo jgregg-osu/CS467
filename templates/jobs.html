@@ -1,7 +1,38 @@
-<!-- jobs.html -->
 {% extends "base.html" %}
 
 {% block content %}
+
+<style>
+
+    #selected-items-wrapper {
+    position: relative;
+    }
+
+    #selected-items-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    #selected-items-container span {
+        font-size: 14px; /* Adjust the font size as needed */
+    }
+
+    #selected-items-container {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        background-color: white; /* You can adjust the background color if needed */
+        padding: 5px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a box shadow for a nice effect */
+    }
+
+</style>
+
     <div class="table-container">
     <h2 class="page-header">Jobs</h2>
 
@@ -23,28 +54,25 @@
             </tr>
         </thead>
         <tbody>
+            {% for job in jobs %}
             <tr>
-                <td>Software Developer</td>
-                <td>$80,000</td>
-                <td>Python, JavaScript, HTML, CSS</td>
-                <td>2022-01-01</td>
-                <td>John Doe</td>
-                <td><button class="edit-button" onclick="navigateToEditJobsPage()">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete()">Delete</button></td>
+                <td>{{ job.title }}</td>
+                <td>{{ job.salary }}</td>
+                <td>
+                    {% for skill in job.skills %}
+                        {{ skill }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ job.start_date }}</td>
+                <td>{{ job.contact }}</td>
+                <td><button class="edit-button" onclick="navigateToEditJobsPage('{{ loop.index0 }}')">Edit</button></td>
+                <td><button class="delete-button" onclick="confirmDelete('{{ loop.index0 }}')">Delete</button></td>
             </tr>
-            <tr>
-                <td>Data Analyst</td>
-                <td>$60,000</td>
-                <td>SQL, Excel, Statistics</td>
-                <td>2022-02-15</td>
-                <td>Jane Smith</td>
-                <td><button class="edit-button" onclick="navigateToEditJobsPage()">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete()">Delete</button></td>
-            </tr>
-        <!-- Add more job rows here -->
+            {% endfor %}
         </tbody>
+        
     </table>
-
+    
     <div class="add-container">
         <h3>Add Job</h3>
         <button class="add-data-button" onclick="addNewJob()">+</button>
@@ -52,50 +80,154 @@
     </div>
 
     <script>
-        function navigateToEditJobsPage() {
-            // JavaScript code to navigate to the edit_jobs page
-            window.location.href = "{{ url_for('edit_jobs') }}";
+        
+    // Array of items for the drop-down (you can replace this with your own array)
+    const items = JSON.parse('{{ skills | safe }}');
+        
+
+    function navigateToEditJobsPage(index) {
+        // JavaScript code to navigate to the edit_jobs page with the jobId as a query parameter
+        window.location.href = "{{ url_for('edit_jobs') }}" + "?index=" + encodeURIComponent(index);
+    }
+    
+    function confirmDelete(index) {
+        // Show a confirmation dialog
+        const result = confirm("Are you sure you want to delete this job entry?");
+
+        // Check the user's choice
+        if (result) {
+            // The user clicked "OK" (Yes), perform the delete action
+            fetch("/deletejob", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ index: index }),
+            })
+            .then((result) => {
+                console.log("Job deleted successfully:");
+                // Reload the page after saving the job
+                    refreshPage(); // This will refresh the page
+            })
+            .catch(error => {
+                console.error("Error saving job:", error);
+            });
+        } else {
+            // The user clicked "Cancel" (No), do nothing or handle as needed
+            console.log("Delete canceled.");
         }
+    }
 
+    function addNewJob() {
+        // JavaScript code to add a new row with text boxes to the table
+        const newRow = document.createElement("tr");
+        newRow.style.verticalAlign = "top"; // Set the vertical alignment to top
+        newRow.innerHTML = `
+            <td><input type="text" class="input-box" placeholder="Title"></td>
+            <td><input type="text" class="input-box" placeholder="Salary"></td>
+            <td><input type="text" class="input-box" placeholder="Skills" id="item-input" oninput="updateDropDown(this.value)">
+                <div id="suggested-items-container"></div>
+                <div id="selected-items-wrapper">
+                <div id="selected-items-container"></div>
+                </div></td>
+            <td><input type="text" class="input-box" placeholder="Start Date"></td>
+            <td><input type="text" class="input-box" placeholder="Contact"></td>
+            <td><button class="save-button" onclick="saveJob()">Save</button></td>
+            <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+    `   ;
+        document.querySelector("tbody").appendChild(newRow);
+    }
+    
+    function saveJob() {
+        // Get the form data
+        const formElements = document.querySelectorAll("tbody tr:last-child input");
+        const formData = {};
+        formElements.forEach(input => {
+            formData[input.getAttribute("placeholder")] = input.value;
+        });
+        // Add the selected items to the form data
+        formData["Skills"] = selectedItems;
+        // Send the form data to the /savejob route
+        fetch("/savejob", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+        })
+        .then((result) => {
+            console.log("Job saved successfully:");
+            // Reload the page after saving the job
+            refreshPage(); // This will refresh the page
+        })
+        .catch(error => {
+            console.error("Error saving job:", error);
+        });
+    }
+    
+    function refreshPage() {
+        window.location.href = "{{ url_for('jobs') }}";
+    }
 
-        function confirmDelete() {
-            // Show a confirmation dialog
-            const result = confirm("Are you sure you want to delete this job entry?");
+    let selectedItems = [];
 
-            // Check the user's choice
-            if (result) {
-                // The user clicked "OK" (Yes), you can perform the delete action here
-                // For example: call a delete function or perform an AJAX request to the server
-                // ... Add your delete logic here ...
-                console.log("Delete confirmed.");
-                window.location.href = "/jobs";
-            } else {
-                // The user clicked "Cancel" (No), do nothing or handle as needed
-                console.log("Delete canceled.");
-            }
+    // Attach the oninput event to the input element
+    document.getElementById("item-input").addEventListener("input", function () {
+        updateDropDown(this.value);
+    });
+
+    function updateDropDown(enteredText) {
+        const suggestedItemsContainer = document.getElementById("suggested-items-container");
+        const inputBox = document.getElementById("item-input");
+        if (enteredText) {
+            // If the user has typed something, show the suggested items and update the options
+            suggestedItemsContainer.style.display = "block";
+            updateSuggestedItems(enteredText);
+        } else {
+            // If the user has cleared the input, hide the suggested items
+            suggestedItemsContainer.style.display = "none";
         }
+    }
 
-        function addNewJob() {
-            // JavaScript code to add a new row with text boxes to the table
-            const newRow = document.createElement("tr");
-            newRow.innerHTML = `
-                <td><input type="text" class="input-box" placeholder="Title"></td>
-                <td><input type="text" class="input-box" placeholder="Salary"></td>
-                <td><input type="text" class="input-box" placeholder="Skills"></td>
-                <td><input type="text" class="input-box" placeholder="Start Date"></td>
-                <td><input type="text" class="input-box" placeholder="Contact"></td>
-                <td><button class="save-button" onclick="refreshPage()">Save</button></td>
-                <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
-            `;
-            document.querySelector("tbody").appendChild(newRow);
-        }
+    function updateSuggestedItems(enteredText) {
+        const suggestedItemsContainer = document.getElementById("suggested-items-container");
+        const filteredItems = items.filter(item => item.toLowerCase().includes(enteredText.toLowerCase()));
+        const maxSuggestions = 3; // Limit the suggestions to 3
+        const optionsHTML = filteredItems.slice(0, maxSuggestions).map(item => {
+            return `<div class="suggested-item" onclick="addItemToSelectedItems('${item}')">${item}</div>`;
+        }).join('');
+        suggestedItemsContainer.innerHTML = optionsHTML;
+    }
 
-        function refreshPage() {
-            window.location.href = "{{ url_for('jobs') }}";
-        }
+    function addItemToSelectedItems(item) {
+        // Add the item to the selectedItems array
+        selectedItems.push(item);
+        // Clear the input
+        document.getElementById("item-input").value = "";
+        // Hide the suggested items
+        const suggestedItemsContainer = document.getElementById("suggested-items-container");
+        suggestedItemsContainer.style.display = "none";
+        // Display the selected items
+        displaySelectedItems();
+    }
+
+    function displaySelectedItems() {
+        const selectedItemsContainer = document.getElementById("selected-items-container");
+        selectedItemsContainer.innerHTML = selectedItems.map(item => `
+            <div class="selected-item">
+                <button class="remove-item-button" id='removeItemButton' onclick="removeItem('${item}')">x</button>
+                <span>${item}</span>
+            </div>
+        `).join('');
+    }
+
+    function removeItem(item) {
+        // Remove the item from the selectedItems array
+        selectedItems = selectedItems.filter(selectedItem => selectedItem !== item);
+        // Display the updated list of selected items
+        displaySelectedItems();
+    }
+
     </script>
 
-
 {% endblock %}
-
-

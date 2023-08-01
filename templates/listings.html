@@ -2,32 +2,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form action="/login" method="post">
-    <label for="location">location:</label>
-    <input type="text" id="location" name="username" required>
-    <br>
-    <label for="keywords">keywords:</label>
-    <input type="password" id="password" name="password" required>
-    <br>
-    <button type="submit">go</button>
-</form>
 
-<h1>Job Search</h1>
-    <form id="job-search-form">
+<style>
+
+    h2 {
+        text-align: center;
+        padding: 5px;
+        margin: 5px;
+    }
+
+</style>
+
+    <h2>Job Search</h2>
+    <form id="job-search-form" action="/listings" method="POST">
         <label for="job-title">Job Title:</label>
         <input type="text" id="job-title" name="job_title" required><br>
 
         <label for="location">Location:</label>
         <input type="text" id="location" name="location" required><br>
 
-        <label for="keywords">Keywords:</label>
-        <input type="text" id="keywords" name="keywords" required><br>
+        <!-- Add a CSRF token for security (make sure to generate the token in your Flask app) -->
+        <input type="hidden" name="csrf_token" value="YOUR_CSRF_TOKEN_HERE">
 
         <input type="submit" value="Search">
     </form>
 
+    {% if results|length > 0 %}
     <div id="results">
-        <table id="job-listings">
+        <table id="job-listings" class="data-table">
             <thead>
                 <tr>
                     <th>Title</th>
@@ -37,59 +39,18 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- The search results will be populated here -->
+                {% for job in results %}
+                <tr>
+                    <td>{{ job.title }}</td>
+                    <td>{{ job.location }}</td>
+                    <td>{{ job.company }}</td>
+                    <td>{{ job.average_salary }}</td>
+                </tr>
+                {% endfor %}
+               
             </tbody>
         </table>
-    </div>
-
-    <script>
-        document.getElementById("job-search-form").addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            const form = event.target;
-            const formData = new FormData(form);
-            const jobTitle = formData.get("job_title");
-            const location = formData.get("location");
-            const keywords = formData.get("keywords");
-
-            // Make an AJAX request to the Flask backend to fetch the job listings
-            fetch("/search", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                const jobListings = data.job_listings;
-                const tableBody = document.getElementById("job-listings").querySelector("tbody");
-
-                // Clear existing table rows
-                tableBody.innerHTML = "";
-
-                // Populate the table with the job listings
-                jobListings.forEach(listing => {
-                    const row = document.createElement("tr");
-                    const titleCell = document.createElement("td");
-                    const locationCell = document.createElement("td");
-                    const companyCell = document.createElement("td");
-                    const salaryCell = document.createElement("td");
-
-                    titleCell.textContent = listing.title;
-                    locationCell.textContent = listing.location;
-                    companyCell.textContent = listing.company;
-                    salaryCell.textContent = listing.salary;
-
-                    row.appendChild(titleCell);
-                    row.appendChild(locationCell);
-                    row.appendChild(companyCell);
-                    row.appendChild(salaryCell);
-
-                    tableBody.appendChild(row);
-                });
-            })
-            .catch(error => {
-                console.error("Error fetching job listings:", error);
-            });
-        });
-    </script>
+    </div>  
+    {% endif %}
 
 {% endblock %}

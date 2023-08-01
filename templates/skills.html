@@ -2,55 +2,63 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="table-container">
-    <h2 class="page-header">Skills</h2>
+
+<style>
    
-    <form class="data-form" style="display: none;">
-        <input type="text" id="job-input" placeholder="Enter a job">
-        <button type="submit">Save</button>
-    </form>
-    
+    #jobSkillsHeader {
+        text-align: center;
+        padding: 5px;
+        margin: 5px;
+    }
+
+    #toggleTableButton {
+        padding: 10px;
+        margin: 10px;
+        border-radius: 5%;
+    }
+
+</style>
+
+    <div class="table-container">
+    <button id="toggleTableButton" onclick="toggleTable()">Skills Employers Want +</button>
+    <div id="skillsDiv" style="display: none;">
+    <h2 id="jobSkillsHeader">In Demand Skills</h2>
     <table class="data-table">
         <thead>
             <tr>
                 <th>Skill</th>
-                <th>Required Jobs</th>
-                <th>Contact</th>
-                <th>Edit</th>
-                <th>Delete</th>
+                <th>% of Jobs</th>
+                <th>Total Jobs</th>
+                <th>Learned</th>
             </tr>
         </thead>
         <tbody>
+            {% for skill in job_skills %}
             <tr>
-                <td>Pogo Sticking</td>
-                <td>Enron</td>
-                <td>Ron Trompson</td>
-                <td><button class="edit-button" onclick="navigateToEditSkillsPage()">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete()">Delete</button></td>
+                <td>{{ skill.skill }}</td>
+                <td>{{ skill.percentage }}</td>
+                <td>{{ skill.count }}</td>
+                <td>
+                    {% if skill.learned %}
+                        <span style="color: green;">&#x2714;</span>  <!-- Green checkmark -->
+                    {% else %}
+                        <span style="color: red;">&#x2718;</span>  <!-- Red X -->
+                    {% endif %}
+                </td>
             </tr>
-            <tr>
-                <td>Data Analytics</td>
-                <td>North Korean Stock Exchange</td>
-                <td>Bill Johnson</td>
-                <td><button class="edit-button" onclick="navigateToEditSkillsPage()">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete()">Delete</button></td>
-            </tr>
-            <!-- Add more job rows here -->
+            {% endfor %}
         </tbody>
     </table>
     
-    <div class="add-container">
-        <h3>Add Skill</h3>
-        <button class="add-data-button" onclick="addNewSkill()">+</button>
     </div>
     </div>
 
     <script>
+
         function navigateToEditSkillsPage() {
             // JavaScript code to navigate to the edit_contacts page
             window.location.href = "{{ url_for('edit_skills') }}";
         }
-
 
         function confirmDelete() {
             // Show a confirmation dialog
@@ -85,6 +93,19 @@
         function refreshPage() {
             window.location.href = "{{ url_for('skills') }}";
         }
+
+        function toggleTable() {
+            const table = document.getElementById("skillsDiv");
+            const button = document.getElementById("toggleTableButton");
+            if (table.style.display === "none") {
+                table.style.display = "table"; // Show the table
+                button.innerText = "Skills Employers Want -"; // Update the button text
+            } else {
+                table.style.display = "none"; // Hide the table
+                button.innerText = "Skills Employers Want +"; // Update the button text
+            }
+        }
+
     </script>
 
 {% endblock %}

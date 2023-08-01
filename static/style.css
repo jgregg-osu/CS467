@@ -85,6 +85,21 @@ button, .logout-btn {
    
     cursor: pointer;
 }
+
+#removeItemButton {
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+}
+.remove-item-button {
+    font-size: 11px; /* Adjust the font size as needed */
+    width: 1vw;
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+    padding: 1px; /* Adjust the padding as needed */
+    cursor: pointer;
+}
 .add-data-button {
     padding: 10px;
     font-size: 20px;

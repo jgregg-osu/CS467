@@ -5,7 +5,37 @@
 
 <style>
    
+   #jobSkillsHeader {
+       text-align: center;
+       padding: 5px;
+       margin: 5px;
+   }
+
+   #mySkillsHeader {
+       text-align: center;
+       padding: 5px;
+       margin: 5px;
+   }
+
+   .table-container {
+       margin: 40px auto; /* Add more space between tables and center horizontally */
+   }
+
+   .toggle-button {
+       display: block; /* Display buttons as blocks to have them appear on separate lines */
+       padding: 10px;
+       margin: 10px auto; /* Add space between buttons and center horizontally */
+       border-radius: 5%;
+   }
+
+   
     #jobSkillsHeader {
+        text-align: center;
+        padding: 5px;
+        margin: 5px;
+    }
+
+    #mySkillsHeader {
         text-align: center;
         padding: 5px;
         margin: 5px;
@@ -19,93 +49,98 @@
 
 </style>
 
-    <div class="table-container">
-    <button id="toggleTableButton" onclick="toggleTable()">Skills Employers Want +</button>
-    <div id="skillsDiv" style="display: none;">
-    <h2 id="jobSkillsHeader">In Demand Skills</h2>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Skill</th>
-                <th>% of Jobs</th>
-                <th>Total Jobs</th>
-                <th>Learned</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for skill in job_skills %}
-            <tr>
-                <td>{{ skill.skill }}</td>
-                <td>{{ skill.percentage }}</td>
-                <td>{{ skill.count }}</td>
-                <td>
-                    {% if skill.learned %}
-                        <span style="color: green;">&#x2714;</span>  <!-- Green checkmark -->
-                    {% else %}
-                        <span style="color: red;">&#x2718;</span>  <!-- Red X -->
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
+<div class="table-container">
+    <button id="toggleJobSkillsButton" onclick="toggleTable('jobSkillsDiv')">Skills Employers Want +</button>
+    <div id="jobSkillsDiv" style="display: none;">
+        <h2 id="jobSkillsHeader">In Demand Skills</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Skill</th>
+                    <th>% of Jobs</th>
+                    <th>Total Jobs</th>
+                    <th>Learned</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for skill in job_skills %}
+                <tr>
+                    <td>{{ skill.skill }}</td>
+                    <td>{{ skill.percentage }}</td>
+                    <td>{{ skill.count }}</td>
+                    <td>
+                        {% if skill.learned %}
+                            <span style="color: green;">&#x2714;</span>  <!-- Green checkmark -->
+                        {% else %}
+                            <span style="color: red;">&#x2718;</span>  <!-- Red X -->
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+</div>
+
+<div class="table-container">
+    <button id="toggleMySkillsButton" onclick="toggleTable('mySkillsDiv')">My Skills +</button>
+    <div id="mySkillsDiv" style="display: none;">
+        <h2 id="mySkillsHeader">My Skills</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Skill</th>
+                    <th>Experience</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for skill in my_skills %}
+                <tr>
+                    <td>{{ skill.skill }}</td>
+                    <td>{{ skill.experience }}</td>
+                    <td><a href="{{ url_for('edit_skill', id=skill.id) }}">Edit</a></td>
+                    <td><a href="{{ url_for('delete_skill', id=skill.id) }}" onclick="return confirmDelete()">Delete</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+</div>
 
-    <script>
+<script>
+    // Your existing JavaScript code here
 
-        function navigateToEditSkillsPage() {
-            // JavaScript code to navigate to the edit_contacts page
-            window.location.href = "{{ url_for('edit_skills') }}";
+    function toggleTable(tableId) {
+        const table = document.getElementById(tableId);
+        const button = tableId === "jobSkillsDiv" ? document.getElementById("toggleJobSkillsButton") : document.getElementById("toggleMySkillsButton");
+
+        if (table.style.display === "none") {
+            table.style.display = "table"; // Show the table
+            button.innerText = tableId === "jobSkillsDiv" ? "Skills Employers Want -" : "My Skills -"; // Update the button text
+        } else {
+            table.style.display = "none"; // Hide the table
+            button.innerText = tableId === "jobSkillsDiv" ? "Skills Employers Want +" : "My Skills +"; // Update the button text
         }
+    }
 
-        function confirmDelete() {
-            // Show a confirmation dialog
-            const result = confirm("Are you sure you want to delete this skill entry?");
+    function confirmDelete() {
+        // Show a confirmation dialog
+        const result = confirm("Are you sure you want to delete this skill entry?");
 
-            // Check the user's choice
-            if (result) {
-                // The user clicked "OK" (Yes), you can perform the delete action here
-                // For example: call a delete function or perform an AJAX request to the server
-                // ... Add your delete logic here ...
-                console.log("Delete confirmed.");
-                window.location.href = "/skills";
-            } else {
-                // The user clicked "Cancel" (No), do nothing or handle as needed
-                console.log("Delete canceled.");
-            }
+        // Check the user's choice
+        if (result) {
+            // The user clicked "OK" (Yes), you can perform the delete action here
+            // For example: call a delete function or perform an AJAX request to the server
+            // ... Add your delete logic here ...
+            console.log("Delete confirmed.");
+            //window.location.href = "/skills"; // Commented out to prevent accidental deletion
+        } else {
+            // The user clicked "Cancel" (No), do nothing or handle as needed
+            console.log("Delete canceled.");
         }
-
-        function addNewSkill() {
-            // JavaScript code to add a new row with text boxes to the table
-            const newRow = document.createElement("tr");
-            newRow.innerHTML = `
-                <td><input type="text" class="input-box" placeholder="Skill"></td>
-                <td><input type="text" class="input-box" placeholder="Required Jobs"></td>
-                <td><input type="text" class="input-box" placeholder="Contact"></td>
-                <td><button class="save-button" onclick="refreshPage()">Save</button></td>
-                <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
-            `;
-            document.querySelector("tbody").appendChild(newRow);
-        }
-
-        function refreshPage() {
-            window.location.href = "{{ url_for('skills') }}";
-        }
-
-        function toggleTable() {
-            const table = document.getElementById("skillsDiv");
-            const button = document.getElementById("toggleTableButton");
-            if (table.style.display === "none") {
-                table.style.display = "table"; // Show the table
-                button.innerText = "Skills Employers Want -"; // Update the button text
-            } else {
-                table.style.display = "none"; // Hide the table
-                button.innerText = "Skills Employers Want +"; // Update the button text
-            }
-        }
-
-    </script>
+    }
+</script>
 
 {% endblock %}

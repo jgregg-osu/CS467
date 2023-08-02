@@ -13,10 +13,9 @@ import json
 import skills_module
 #import ast
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'version3-394707-b9f0e6124f86.json'
 
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/cs467-394002-67a08c8a3380.json'
 app = Flask(__name__)
 datastore_client = datastore.Client()
 app.secret_key = os.urandom(24)
@@ -27,9 +26,15 @@ google = oauth.remote_app(
     # consumer_key='659922551489-fv356bauic9p6odg9t8hhlk75eg5ol83.apps.googleusercontent.com',
     # consumer_secret='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',
 
+
     # Jonathan's version
-    consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
-    consumer_secret='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',
+    #consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
+    #consumer_secret='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',
+
+
+    #Chasen key
+    consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
+    consumer_secret='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',
     request_token_params={
         'scope': 'email',
     },

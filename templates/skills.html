@@ -69,7 +69,7 @@
                     <td>{{ skill.percentage }}</td>
                     <td>{{ skill.count }}</td>
                     <td>
-                        {% if skill.learned %}
+                        {% if skill.skill in my_skill_names %}
                             <span style="color: green;">&#x2714;</span>  <!-- Green checkmark -->
                         {% else %}
                             <span style="color: red;">&#x2718;</span>  <!-- Red X -->
@@ -100,8 +100,8 @@
                 <tr>
                     <td>{{ skill.skill }}</td>
                     <td>{{ skill.experience }}</td>
-                    <td><button class="edit-button" onclick="navigateToEditSkillsPage('{{ loop.index0 }}')">Edit</button></td>
-                <td><button class="delete-button" onclick="confirmDelete('{{ loop.index0 }}')">Delete</button></td>
+                    <td><button class="edit-button" onclick="navigateToEditSkillsPage('0')">Edit</button></td>
+                    <td><button class="delete-button" onclick="confirmDelete('0')">Delete</button></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -126,26 +126,30 @@
     function addNewSkill() {
         // JavaScript code to add a new row with text boxes to the table
         const newRow = document.createElement("tr");
-        newRow.style.verticalAlign = "top"; // Set the vertical alignment to top
+     
         newRow.innerHTML = `
         
         <td><input type="text" class="input-box" placeholder="Skill"></td>
             <td><input type="text" class="input-box" placeholder="Experience Level"></td>
-            <td><button class="save-button" onclick="saveSkill()">Save</button></td>
-            <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+            <td><button class="save-button" onclick="saveSkill(this)">Save</button></td>
+            <td><button class="cancel-button" onclick="refreshPage(this)">Cancel</button></td>
     `   ;
         document.querySelector("#mySkillsDiv tbody").appendChild(newRow);
     }
     
-    function saveSkill() {
-        // Get the form data
-        const formElements = document.querySelectorAll("tbody tr:last-child input");
-        const formData = {};
-        formElements.forEach(input => {
-            formData[input.getAttribute("placeholder")] = input.value;
-        });
-       
-        // Send the form data to the /saveSkill route
+    function saveSkill(row) {
+        // Get the skill and experience level from the input boxes
+        const skill = row.closest("tr").querySelector("input[placeholder='Skill']").value;
+        const experienceLevel = row.closest("tr").querySelector("input[placeholder='Experience Level']").value;
+
+        // Check if both skill and experience level are provided
+        if (skill.trim() === "" || experienceLevel.trim() === "") {
+            alert("Please enter both Skill and Experience Level before saving.");
+            return;
+        }
+
+        // Send the skill data to the server and save it in the database
+        const formData = { "Skill": skill, "Experience Level": experienceLevel };
         fetch("/saveSkill", {
             method: "POST",
             headers: {
@@ -155,8 +159,8 @@
         })
         .then((result) => {
             console.log("Skill saved successfully:");
-            // Reload the page after saving the job
-            refreshPage(); // This will refresh the page
+            // Refresh the page after saving the skill
+            window.location.reload();
         })
         .catch(error => {
             console.error("Error saving Skill:", error);

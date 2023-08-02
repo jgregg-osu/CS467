@@ -170,42 +170,80 @@ def skills():
         return logout()
     sorted_job_skills = get_job_skills()
 
-    return render_template('skills.html', job_skills=sorted_job_skills)
+    if request.method == 'GET':
+        user = getUser()
+        userSkills = user['skills']
+
+       
+        return render_template('skills.html', userSkill=userSkills, job_skills=sorted_job_skills)
+    else:
+        render_template('index.html')
+
 
 def get_job_skills():
-    """gets all skills required for jobs and compiles array of dictioaries
-    holding each skill with a percentage of jobs its used for and if the user
+    """Gets all skills required for jobs and compiles an array of dictionaries
+    holding each skill with a percentage of jobs it's used for and if the user
     has learned the skill or not"""
     user = getUser()
     jobs = user['jobs']
     skills = user['skills']
     skills_array = []
+
     for skill in skills:
-        skills_array.append(skill['skill_name'].lower())
+        # Check if the 'skill_name' key exists before accessing it
+        if 'skill_name' in skill:
+            skills_array.append(skill['skill_name'].lower())
+
     skills_for_jobs_dict = {}
     skills_added = []
     total_jobs = 0
+
     for job in jobs:
         total_jobs += 1
         job_skills = job['skills']
+
         for skill in job_skills:
             if skill.lower() in skills_added:
                 skills_for_jobs_dict[skill] += 1
             else:
                 skills_for_jobs_dict[skill] = 1
             skills_added.append(skill.lower())
-    # have dict with each skill and number of jobs it appears in
+
+    # Have a dictionary with each skill and the number of jobs it appears in
     display_skills_array = []
+
     for skill, count in skills_for_jobs_dict.items():
         percentage = str(int((count / total_jobs) * 100)) + "%"
         learned = (skill in skills_array)
         skill_display = {'skill': skill, 'percentage': percentage, 'count': count, 'learned': learned}
         display_skills_array.append(skill_display)
-    # display set not sorted
+
+    # Display set not sorted
     sorted_job_skills = sorted(display_skills_array, key=lambda x: x['count'], reverse=True)
 
     return sorted_job_skills
 
+
+@app.route('/saveSkill', methods=['POST'])
+def saveSkill():
+    if request.method == 'POST':
+        skill_data = request.get_json()
+        skillTitle = skill_data.get('Skills')
+        experienceLevel = skill_data.get('Experience Level')
+        
+
+        user = getUser()
+
+        user['skills'].append({
+        'skill': skillTitle,
+        'experience': experienceLevel,
+        
+        })
+        #datastore_client.put(user)
+    
+        return ('successfully created', 201)
+    else:
+        return ({'Error': 'Skill not created'}, 400)
 
 @app.route('/edit_skills')
 def edit_skills():

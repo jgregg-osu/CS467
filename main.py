@@ -168,14 +168,22 @@ def instructions():
 def skills():
     if not verify_logged_in():
         return logout()
+
     sorted_job_skills = get_job_skills()
 
     if request.method == 'GET':
         user = getUser()
-        userSkills = user['skills']
+        user_skills = user['skills']
 
-       
-        return render_template('skills.html', userSkill=userSkills, job_skills=sorted_job_skills)
+        # Filter out any skill entries with a None value
+        my_skills = [{'skill': skill.get('skill'), 'experience': skill.get('experience')} for skill in user_skills if skill.get('skill') is not None]
+
+        # Add print statements here to check the values of job_skills and my_skills
+        print("job_skills:", sorted_job_skills)
+        print("my_skills:", my_skills)
+
+        return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills)
+
     else:
         render_template('index.html')
 
@@ -228,19 +236,21 @@ def get_job_skills():
 def saveSkill():
     if request.method == 'POST':
         skill_data = request.get_json()
-        skillTitle = skill_data.get('Skills')
+        skillTitle = skill_data.get('Skill')
         experienceLevel = skill_data.get('Experience Level')
-        
 
+        # Get the current user's entity
         user = getUser()
 
+        # Add the new skill data to the user's skills list
         user['skills'].append({
-        'skill': skillTitle,
-        'experience': experienceLevel,
-        
+            'skill': skillTitle,
+            'experience': experienceLevel,
         })
-        #datastore_client.put(user)
-    
+
+        # Save the updated user entity in the database
+        datastore_client.put(user)
+
         return ('successfully created', 201)
     else:
         return ({'Error': 'Skill not created'}, 400)

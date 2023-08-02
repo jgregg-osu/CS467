@@ -177,12 +177,15 @@ def skills():
 
         # Filter out any skill entries with a None value
         my_skills = [{'skill': skill.get('skill'), 'experience': skill.get('experience')} for skill in user_skills if skill.get('skill') is not None]
+        
+        # Extract the names of all skills in "my_skills"
+        my_skill_names = [skill['skill'] for skill in my_skills]
 
         # Add print statements here to check the values of job_skills and my_skills
         print("job_skills:", sorted_job_skills)
         print("my_skills:", my_skills)
 
-        return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills)
+        return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills, my_skill_names=my_skill_names)
 
     else:
         render_template('index.html')

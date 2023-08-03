@@ -365,6 +365,21 @@ def saveContact():
         return ({'Error': 'Contact not created'}, 400)
 
 
+@app.route('/delete_contacts', methods=['POST'])
+def delete_contact():
+    if request.method == 'POST':
+        contact_data = request.get_json()
+        index = contact_data.get('index')
+
+        user = getUser()
+
+        del user['contacts'][index]
+        datastore_client.put(user)
+    
+        return ('successfully deleted', 201)
+    else:
+        return ({'Error': 'Contact not deleted'}, 400)
+
 
 @app.route('/edit_contacts')
 def edit_contacts():

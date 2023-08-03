@@ -13,10 +13,9 @@ import json
 import skills_module
 #import ast
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'version3-394707-b9f0e6124f86.json'
 
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/cs467-394002-67a08c8a3380.json'
 app = Flask(__name__)
 datastore_client = datastore.Client()
 app.secret_key = os.urandom(24)
@@ -27,9 +26,15 @@ google = oauth.remote_app(
     # consumer_key='659922551489-fv356bauic9p6odg9t8hhlk75eg5ol83.apps.googleusercontent.com',
     # consumer_secret='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',
 
+
     # Jonathan's version
-    consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
-    consumer_secret='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',
+    #consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
+    #consumer_secret='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',
+
+
+    #Chasen key
+    consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
+    consumer_secret='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',
     request_token_params={
         'scope': 'email',
     },
@@ -163,48 +168,117 @@ def instructions():
 def skills():
     if not verify_logged_in():
         return logout()
+
     sorted_job_skills = get_job_skills()
 
-    return render_template('skills.html', job_skills=sorted_job_skills)
+    if request.method == 'GET':
+        user = getUser()
+        user_skills = user['skills']
+
+        # Filter out any skill entries with a None value
+        my_skills = [{'skill': skill.get('skill'), 'experience': skill.get('experience')} for skill in user_skills if skill.get('skill') is not None]
+        
+        # Extract the names of all skills in "my_skills"
+        my_skill_names = [skill['skill'] for skill in my_skills]
+
+        # Add print statements here to check the values of job_skills and my_skills
+        print("job_skills:", sorted_job_skills)
+        print("my_skills:", my_skills)
+
+        return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills, my_skill_names=my_skill_names)
+
+    else:
+        render_template('index.html')
+
 
 def get_job_skills():
-    """gets all skills required for jobs and compiles array of dictioaries
-    holding each skill with a percentage of jobs its used for and if the user
+    """Gets all skills required for jobs and compiles an array of dictionaries
+    holding each skill with a percentage of jobs it's used for and if the user
     has learned the skill or not"""
     user = getUser()
     jobs = user['jobs']
     skills = user['skills']
     skills_array = []
+
     for skill in skills:
-        skills_array.append(skill['skill_name'].lower())
+        # Check if the 'skill_name' key exists before accessing it
+        if 'skill_name' in skill:
+            skills_array.append(skill['skill_name'].lower())
+
     skills_for_jobs_dict = {}
     skills_added = []
     total_jobs = 0
+
     for job in jobs:
         total_jobs += 1
         job_skills = job['skills']
+
         for skill in job_skills:
             if skill.lower() in skills_added:
                 skills_for_jobs_dict[skill] += 1
             else:
                 skills_for_jobs_dict[skill] = 1
             skills_added.append(skill.lower())
-    # have dict with each skill and number of jobs it appears in
+
+    # Have a dictionary with each skill and the number of jobs it appears in
     display_skills_array = []
+
     for skill, count in skills_for_jobs_dict.items():
         percentage = str(int((count / total_jobs) * 100)) + "%"
         learned = (skill in skills_array)
         skill_display = {'skill': skill, 'percentage': percentage, 'count': count, 'learned': learned}
         display_skills_array.append(skill_display)
-    # display set not sorted
+
+    # Display set not sorted
     sorted_job_skills = sorted(display_skills_array, key=lambda x: x['count'], reverse=True)
 
     return sorted_job_skills
 
 
+@app.route('/saveSkill', methods=['POST'])
+def saveSkill():
+    if request.method == 'POST':
+        skill_data = request.get_json()
+        skillTitle = skill_data.get('Skill')
+        experienceLevel = skill_data.get('Experience Level')
+
+        # Get the current user's entity
+        user = getUser()
+
+        # Add the new skill data to the user's skills list
+        user['skills'].append({
+            'skill': skillTitle,
+            'experience': experienceLevel,
+        })
+
+        # Save the updated user entity in the database
+        datastore_client.put(user)
+
+        return ('successfully created', 201)
+    else:
+        return ({'Error': 'Skill not created'}, 400)
+
 @app.route('/edit_skills')
 def edit_skills():
     return render_template('edit_skills.html')
+
+
+@app.route('/deleteSkill', methods=['POST'])
+def delete_skill():
+    if request.method == 'POST':
+        # Get the skill ID from the request body
+        data = request.get_json()
+        index = int(data.get('index'))
+        if index is None:
+            return ({"error": "Skill not provided"}, 400)
+        # Delete the job from the Datastore
+        user = getUser()
+        user['skills'].pop(index)
+        datastore_client.put(user)
+
+        return ('', 204)
+    else:
+        return ({'Error': 'Delete unsuccesful'}, 400)
 
 
 @app.route('/jobs', methods=['GET'])

@@ -263,6 +263,24 @@ def edit_skills():
     return render_template('edit_skills.html')
 
 
+@app.route('/deleteSkill', methods=['POST'])
+def delete_skill():
+    if request.method == 'POST':
+        # Get the skill ID from the request body
+        data = request.get_json()
+        index = int(data.get('index'))
+        if index is None:
+            return ({"error": "Skill not provided"}, 400)
+        # Delete the job from the Datastore
+        user = getUser()
+        user['skills'].pop(index)
+        datastore_client.put(user)
+
+        return ('', 204)
+    else:
+        return ({'Error': 'Delete unsuccesful'}, 400)
+
+
 @app.route('/jobs', methods=['GET'])
 def jobs():
     if not verify_logged_in():

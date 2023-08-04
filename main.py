@@ -13,7 +13,7 @@ import json
 import skills_module
 #import ast
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'version3-394707-b9f0e6124f86.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/cs467-394002-67a08c8a3380.json'
 
 
 app = Flask(__name__)
@@ -28,13 +28,13 @@ google = oauth.remote_app(
 
 
     # Jonathan's version
-    #consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
-    #consumer_secret='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',
+    consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
+    consumer_secret='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',
 
 
     #Chasen key
-    consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
-    consumer_secret='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',
+    # consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
+    # consumer_secret='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',
     request_token_params={
         'scope': 'email',
     },
@@ -442,17 +442,36 @@ def saveContact():
 @app.route('/delete_contacts', methods=['POST'])
 def delete_contact():
     if request.method == 'POST':
-        contact_data = request.get_json()
-        index = contact_data.get('index')
-
+        # Get the job ID from the request body
+        data = request.get_json()
+        index = int(data.get('index'))
+        if index is None:
+            return ({"error": "Contact not provided"}, 400)
+        # Delete the job from the Datastore
         user = getUser()
-
-        del user['contacts'][index]
+        user['contacts'].pop(index)
         datastore_client.put(user)
-    
-        return ('successfully deleted', 201)
+
+        return ('', 204)
     else:
-        return ({'Error': 'Contact not deleted'}, 400)
+        return ({'Error': 'Delete unsuccesful'}, 400)
+    # if request.method == 'POST':
+    #     contact_data = request.get_json()
+    #     index = contact_data.get('index')
+
+    #     user = getUser()
+
+    #     entity_id = user['id']
+    #     entity_key = datastore_client.key('user', entity_id, 'contacts', index)
+    #     datastore_client.delete(entity_key)
+
+
+    #     # del user['contacts'][index]
+    #     # datastore_client.put(user)
+    
+    #     return ('successfully deleted', 201)
+    # else:
+    #     return ({'Error': 'Contact not deleted'}, 400)
 
 
 @app.route('/edit_contacts')

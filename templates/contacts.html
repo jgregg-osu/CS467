@@ -26,10 +26,13 @@
                     <td>{{ contact.title }}</td>
                     <td>{{ contact.phone }}</td>
                     <td>{{ contact.email }}</td>
-                    <td><button class="edit-button" onclick="navigateToEditContactsPage({{loop.index - 1}})">Edit</button></td>
-                    <td><button class="delete-button" onclick="confirmDelete({{loop.index - 1}})">Delete</button></td>
+                    <td><button class="edit-button" onclick="navigateToEditContactsPage('{{loop.index - 1}}')">E{{loop.index - 1}}</button></td>
+                    <td><button class="delete-button" onclick="confirmDelete('{{loop.index - 1}}')">D{{loop.index0}}</button></td>
                 </tr>
                 {% endfor %}
+                <tr>
+                    {{user_entity}}
+                </tr>
             </tbody>
         </table>
         <div class="add-container">
@@ -47,39 +50,59 @@
 
 
         function confirmDelete(index) {
-            // Show a confirmation dialog
-            const result = confirm("Are you sure you want to delete this contact entry?");
-            // Check the user's choice
-            if (result) {
-                // The user clicked "OK" (Yes), you can perform the delete action here
-                // For example: call a delete function or perform an AJAX request to the server
-                // ... Add your delete logic here ...
-                // Get the form data
-                const formData = {};
-                formData["index"] = index;
-                // Send the form data to the /saveContact route
-                fetch("/delete_contacts", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(formData),
-                })
-                .then((result) => {
-                    console.log("Contact deleted successfully:");
-                    // Reload the page after saving the contact
+        // Show a confirmation dialog
+        const result = confirm("Are you sure you want to delete this job entry?");
+
+        // Check the user's choice
+        if (result) {
+            // The user clicked "OK" (Yes), perform the delete action
+            fetch("/delete_contacts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ index: index }),
+            })
+            .then((result) => {
+                console.log("Contact deleted successfully:");
+                // Reload the page after saving the job
                     refreshPage(); // This will refresh the page
-                })
-                .catch(error => {
-                    console.error("Error deleting contact:", error);
-                });
-                    window.location.href = "/delete_contacts";
-                    console.log("Delete confirmed.");
-                } else {
-                    // The user clicked "Cancel" (No), do nothing or handle as needed
-                    console.log("Delete canceled.");
-                }
+            })
+            .catch(error => {
+                console.error("Error saving job:", error);
+            });
+        } else {
+            // The user clicked "Cancel" (No), do nothing or handle as needed
+            console.log("Delete canceled.");
         }
+    }
+    //     function confirmDelete(index) {
+    //     // Show a confirmation dialog
+    //     const result = confirm("Are you sure you want to delete this job entry?");
+
+    //     // Check the user's choice
+    //     if (result) {
+    //         // The user clicked "OK" (Yes), perform the delete action
+    //         fetch("/delete_contacts", {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({ index: index }),
+    //         })
+    //         .then((result) => {
+    //             console.log("Job deleted successfully:");
+    //             // Reload the page after saving the job
+    //                 refreshPage(); // This will refresh the page
+    //         })
+    //         .catch(error => {
+    //             console.error("Error saving job:", error);
+    //         });
+    //     } else {
+    //         // The user clicked "Cancel" (No), do nothing or handle as needed
+    //         console.log("Delete canceled.");
+    //     }
+    // }
 
 
         function addNewContact() {

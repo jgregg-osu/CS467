@@ -45,7 +45,7 @@
     <script>
         function navigateToEditContactsPage(index) {
             // JavaScript code to navigate to the edit_contacts page
-            window.location.href = "{{ url_for('edit_contacts') }}";
+            window.location.href = "{{ url_for('edit_contacts') }}" + "?index=" + encodeURIComponent(index);
         }
 
 

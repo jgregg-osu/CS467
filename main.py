@@ -46,9 +46,9 @@ google = oauth.remote_app(
 )
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
+    if request.method == 'POST' or request.method == 'GET':
         return google.authorize(callback=url_for('authorized', _external=True))
     else:
         return render_template('index.html')
@@ -474,9 +474,47 @@ def delete_contact():
     #     return ({'Error': 'Contact not deleted'}, 400)
 
 
-@app.route('/edit_contacts')
+# @app.route('/edit_contacts')
+# def edit_contacts():
+#     return render_template('edit_contacts.html')
+
+@app.route('/edit_contacts', methods=['GET'])
 def edit_contacts():
-    return render_template('edit_contacts.html')
+    if request.method == 'GET':
+        index = int(request.args.get('index'))
+        user = getUser()
+        contact = user['contacts'][index]
+        return render_template('edit_contacts.html', contact=contact, index=index)
+    else:
+        render_template('contacts.html')
+
+@app.route('/save_contact_edit', methods=['POST'])
+def save_contact_edit():
+    if request.method == 'POST':
+        index = int(request.form.get('index'))
+        name = request.form.get('name')
+        company = request.form.get('company')
+        title = request.form.get('title')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+
+        # Update the job in the jobs list if the index is valid
+        if index >= 0:
+            user = getUser()
+            if not user:
+                return redirect(url_for('login'))
+            contacts = user['contacts']
+            if index < len(contacts):
+                contacts[index]['name'] = name
+                contacts[index]['company'] = company
+                contacts[index]['title'] = title
+                contacts[index]['phone'] = phone
+                contacts[index]['email'] = email
+                datastore_client.put(user)
+
+        return render_template('contacts.html', user_entity=user)
+    else:
+        return render_template('index.html')
 
 
 @app.route('/listings', methods=['GET', 'POST'])
@@ -525,12 +563,24 @@ def verify_logged_in():
 
 
 
+# def getUser():
+#     query = datastore_client.query(kind=constants.user)
+#     query.add_filter('id', '=', session.get('user'))
+#     users = list(query.fetch())
+#     if users:
+#         return users[0]
+#     else:
+#         return None
+
 def getUser():
     query = datastore_client.query(kind=constants.user)
     query.add_filter('id', '=', session.get('user'))
     users = list(query.fetch())
-    user = users[0]
-    return user
+    if users:
+        user = users[0]
+        return user
+    else:
+        return redirect(url_for('login'))
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

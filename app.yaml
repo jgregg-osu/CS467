@@ -25,3 +25,10 @@ handlers:
   # the entire handlers section) when there are no static files defined.
 - url: /.*
   script: auto
+
+env_variables:
+  CONSUMER_KEY: '659922551489-fv356bauic9p6odg9t8hhlk75eg5ol83.apps.googleusercontent.com'
+  CONSUMER_SECRET: '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'
+  LISTINGS_API_ID: 'e4af539a'
+  LISTINGS_API_KEY: '5b9a59826ec65bd60f414d2d7b887103'
+  GOOGLE_APPLICATION_CREDENTIALS: 'keys/job-tracker-app-392713-cc69c2226a63.json'

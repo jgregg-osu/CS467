@@ -1,34 +1,32 @@
 from flask import Flask, redirect, url_for, session, render_template, request
+from google.auth.transport import requests as google_requests
 from flask_oauthlib.client import OAuth
+from google.oauth2 import id_token
 from google.cloud import datastore
 from flask_session import Session
-import requests
-import os
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
-import constants
 from flask_bcrypt import Bcrypt
+import requests
 import json
-import skills_module
-import secrets
+import os
 
+import constants
+import skills_module
 
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
+
 app.secret_key = os.urandom(24)
 bcrypt = Bcrypt(app)
 oauth = OAuth(app)
 
 key = os.environ.get('CONSUMER_KEY')
 secret = os.environ.get('CONSUMER_SECRET')
-#app.secret_key = '8c215e1fe8fad22d287ec26c80645ad4'
+
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = '/tmp/sessions'
 Session(app)
 
-
-#Session(app)
 
 google = oauth.remote_app(
     'google',
@@ -86,8 +84,6 @@ def authorized():
     users = list(query.fetch())
     for user in users:
         if user['id'] == user_id:
-            # return f"users: {json.dumps(user, indent=2)}, user['id]: {str(user['id'])}, user_id: {str(user_id)}"
-            # return 'Can you see this?'
             return redirect(url_for('skills'))
     user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
     user_entity['id'] = user_id
@@ -102,13 +98,6 @@ def authorized():
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('user')
-
-
-# Set the Referrer-Policy header for all responses
-#@app.after_request
-#def add_referrer_policy_header(response):
- #   response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
-  #  return response
 
 
 @app.route('/login-normal', methods=['POST'])
@@ -172,7 +161,7 @@ def skills():
     if user == None:
         return logout()
 
-    sorted_job_skills = get_job_skills()
+    sorted_job_skills = get_job_skills(user)
 
     if request.method == 'GET':
        
@@ -191,15 +180,11 @@ def skills():
         return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills, my_skill_names=my_skill_names)
 
     else:
-        return "skills logout error"
-        render_template('index.html')
+        return logout()
 
 
-def get_job_skills():
-    """Gets all skills required for jobs and compiles an array of dictionaries
-    holding each skill with a percentage of jobs it's used for and if the user
-    has learned the skill or not"""
-    user = getUser()
+def get_job_skills(user):
+    
     jobs = user['jobs']
     skills = user['skills']
     skills_array = []
@@ -219,9 +204,9 @@ def get_job_skills():
 
         for skill in job_skills:
             if skill.lower() in skills_added:
-                skills_for_jobs_dict[skill] += 1
+                skills_for_jobs_dict[skill.lower()] += 1
             else:
-                skills_for_jobs_dict[skill] = 1
+                skills_for_jobs_dict[skill.lower()] = 1
             skills_added.append(skill.lower())
 
     # Have a dictionary with each skill and the number of jobs it appears in
@@ -232,10 +217,8 @@ def get_job_skills():
         learned = (skill in skills_array)
         skill_display = {'skill': skill, 'percentage': percentage, 'count': count, 'learned': learned}
         display_skills_array.append(skill_display)
-
     # Display set not sorted
     sorted_job_skills = sorted(display_skills_array, key=lambda x: x['count'], reverse=True)
-
     return sorted_job_skills
 
 
@@ -291,14 +274,13 @@ def jobs():
     if user == None:
         return logout()
     if request.method == 'GET':
-        user = getUser()
         jobs = user['jobs']
         skills = skills_module.skills
         skills_json = json.dumps(skills)
         return render_template('jobs.html', jobs=jobs, skills=skills_json)
     else:
-        return "jobs logout error"
-        render_template('index.html')
+        return logout()
+    
 
 @app.route('/savejob', methods=['POST'])
 def savejob():
@@ -311,6 +293,8 @@ def savejob():
         contact = job_data.get('Contact')
 
         user = getUser()
+        if user == None:
+            logout()
 
         user['jobs'].append({
         'title': title,
@@ -336,9 +320,10 @@ def delete_job():
             return ({"error": "Job not provided"}, 400)
         # Delete the job from the Datastore
         user = getUser()
+        if user == None:
+            return logout()
         user['jobs'].pop(index)
         datastore_client.put(user)
-
         return ('', 204)
     else:
         return ({'Error': 'Delete unsuccesful'}, 400)
@@ -346,30 +331,32 @@ def delete_job():
 @app.route('/edit_jobs', methods=['GET'])
 def edit_jobs():
     if request.method == 'GET':
-        index = int(request.args.get('index'))
         user = getUser()
+        if user == None:
+            return logout()
+        index = int(request.args.get('index'))
         job = user['jobs'][index]
         skills = skills_module.skills
         skills_json = json.dumps(skills)
         selected_skills = job['skills']
-       
         return render_template('edit_jobs.html', job=job, index=index, skills=skills_json, selected_skills=selected_skills)
     else:
-        render_template('jobs.html')
+        return logout()
 
 @app.route('/saveJobEdit', methods=['POST'])
 def saveJobEdit():
     if request.method == 'POST':
+        user = getUser()
+        if user == None:
+            return logout()
         index = int(request.form.get('index'))
         title = request.form.get('title')
         salary = request.form.get('salary')
         skills = json.loads(request.form.get('skills'))
         start_date = request.form.get('start_date')
         contact = request.form.get('contacts')
-
         # Update the job in the jobs list if the index is valid
         if index >= 0:
-            user = getUser()
             jobs = user['jobs']
             if index < len(jobs):
                 jobs[index]['title'] = title
@@ -378,11 +365,9 @@ def saveJobEdit():
                 jobs[index]['start_date'] = start_date
                 jobs[index]['contact'] = contact
                 datastore_client.put(user)
-
         return render_template('jobs.html', jobs=user['jobs'])
     else:
-        return "save jobs logout error"
-        return render_template('index.html')
+        return logout()
 
 
 @app.route('/contacts')
@@ -451,7 +436,6 @@ def listings():
     user = getUser()
     if user == None:
         return logout()
-   
     if request.method == 'GET':
         return render_template('listings.html', results=[])
     elif request.method == 'POST':
@@ -482,37 +466,21 @@ def listings():
             })
         return render_template('listings.html', results=job_listings)
     else:
-        return "listings logout error"
-        return render_template('index.html')
-
-
-def verify_logged_in():
-    if 'user' in session:
-        return True
-    return False
-
+        return logout()
 
 
 def getUser():
+    current_id = session.get('user', None)
+    if current_id == None:
+        return None
     query = datastore_client.query(kind=constants.user)
     #query.add_filter('id', '=', session.get('user'))
     users = list(query.fetch())
-    current_id = session.get('user', None)
-    if current_id == None:
-        return logout()
     for user in users:
         if user['id'] == current_id:
             return user
-    #user = users[0]
     return None
-    return "user id not found"
+
 
 if __name__ == "__main__":
-    # This is used when running locally only. When deploying to Google App
-    # Engine, a webserver process such as Gunicorn will serve the app. This
-    # can be configured by adding an `entrypoint` to app.yaml.
-    # Flask's development server will automatically serve static files in
-    # the "static" directory. See:
-    # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
-    # App Engine itself will serve those files as configured in app.yaml.
     app.run(host="127.0.0.1", port=8080, debug=True)

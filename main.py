@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, session, render_template, request
 from flask_oauthlib.client import OAuth
 from google.cloud import datastore
+from flask_session import Session
 import requests
 import os
 from google.auth.transport import requests as google_requests
@@ -8,12 +9,9 @@ from google.oauth2 import id_token
 import constants
 from flask_bcrypt import Bcrypt
 import json
-
-
 import skills_module
-#import ast
+import secrets
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'version3-394707-b9f0e6124f86.json'
 
 
 app = Flask(__name__)
@@ -21,20 +19,21 @@ datastore_client = datastore.Client()
 app.secret_key = os.urandom(24)
 bcrypt = Bcrypt(app)
 oauth = OAuth(app)
+
+key = os.environ.get('CONSUMER_KEY')
+secret = os.environ.get('CONSUMER_SECRET')
+#app.secret_key = '8c215e1fe8fad22d287ec26c80645ad4'
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/sessions'
+Session(app)
+
+
+#Session(app)
+
 google = oauth.remote_app(
     'google',
-    # consumer_key='659922551489-fv356bauic9p6odg9t8hhlk75eg5ol83.apps.googleusercontent.com',
-    # consumer_secret='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',
-
-
-    # Jonathan's version
-    #consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
-    #consumer_secret='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',
-
-
-    #Chasen key
-    consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
-    consumer_secret='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',
+    consumer_key=str(key),
+    consumer_secret=str(secret),
     request_token_params={
         'scope': 'email',
     },
@@ -49,7 +48,10 @@ google = oauth.remote_app(
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-        return google.authorize(callback=url_for('authorized', _external=True))
+        try:
+            return google.authorize(callback=url_for('authorized', _external=True))
+        except:
+            return render_template('index.html')
     else:
         return render_template('index.html')
 
@@ -103,10 +105,10 @@ def get_google_oauth_token():
 
 
 # Set the Referrer-Policy header for all responses
-@app.after_request
-def add_referrer_policy_header(response):
-    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
-    return response
+#@app.after_request
+#def add_referrer_policy_header(response):
+ #   response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
+  #  return response
 
 
 @app.route('/login-normal', methods=['POST'])
@@ -166,13 +168,14 @@ def instructions():
 
 @app.route('/skills')
 def skills():
-    if not verify_logged_in():
+    user = getUser()
+    if user == None:
         return logout()
 
     sorted_job_skills = get_job_skills()
 
     if request.method == 'GET':
-        user = getUser()
+       
         user_skills = user['skills']
 
         # Filter out any skill entries with a None value
@@ -188,6 +191,7 @@ def skills():
         return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills, my_skill_names=my_skill_names)
 
     else:
+        return "skills logout error"
         render_template('index.html')
 
 
@@ -283,8 +287,9 @@ def delete_skill():
 
 @app.route('/jobs', methods=['GET'])
 def jobs():
-    if not verify_logged_in():
-            return logout()
+    user = getUser()
+    if user == None:
+        return logout()
     if request.method == 'GET':
         user = getUser()
         jobs = user['jobs']
@@ -292,6 +297,7 @@ def jobs():
         skills_json = json.dumps(skills)
         return render_template('jobs.html', jobs=jobs, skills=skills_json)
     else:
+        return "jobs logout error"
         render_template('index.html')
 
 @app.route('/savejob', methods=['POST'])
@@ -375,24 +381,9 @@ def saveJobEdit():
 
         return render_template('jobs.html', jobs=user['jobs'])
     else:
+        return "save jobs logout error"
         return render_template('index.html')
 
-
-# @app.route('/contacts')
-# def contacts():
-#     query = datastore_client.query(kind=constants.user)
-#     users = list(query.fetch())
-#     for user in users:
-#         print(user.key.id)
-#         print(False)
-#     if not verify_logged_in():
-#         return logout()
-#     return render_template('contacts.html')
-
-# @app.route('/contacts')
-# def contacts():
-#     user_id = session.get('user')
-#     return render_template('contacts.html', user_id=user_id)
 
 @app.route('/contacts')
 def contacts():
@@ -407,11 +398,6 @@ def contacts():
     user_entity = results[0]
     return render_template('contacts.html', user_entity=user_entity)
     
-
-# @app.route('/add_contacts', methods=['POST'])
-# def add_contacts():
-#     return 'works'
-#     return render_template('contacts.html')
 
 @app.route('/saveContact', methods=['POST'])
 def saveContact():
@@ -462,21 +448,21 @@ def edit_contacts():
 
 @app.route('/listings', methods=['GET', 'POST'])
 def listings():
-    if not verify_logged_in():
+    user = getUser()
+    if user == None:
         return logout()
+   
     if request.method == 'GET':
         return render_template('listings.html', results=[])
     elif request.method == 'POST':
-        ################################
-        # app id
-        # app key
-        ###############################
+        listings_api_id = os.environ.get('LISTINGS_API_ID')
+        listings_api_key = os.environ.get('LISTINGS_API_KEY')
         url = "http://api.adzuna.com:80/v1/api/jobs/us/search/1"
         jobTitle = request.form.get("job-title")
         location = request.form.get("location")
         params = {
-            "app_id": app_id,
-            "app_key": app_key,
+            "app_id": listings_api_id,
+            "app_key": listings_api_key,
             "results_per_page": 10,
             "what": jobTitle,
             "where": location,
@@ -496,6 +482,7 @@ def listings():
             })
         return render_template('listings.html', results=job_listings)
     else:
+        return "listings logout error"
         return render_template('index.html')
 
 
@@ -508,10 +495,17 @@ def verify_logged_in():
 
 def getUser():
     query = datastore_client.query(kind=constants.user)
-    query.add_filter('id', '=', session.get('user'))
+    #query.add_filter('id', '=', session.get('user'))
     users = list(query.fetch())
-    user = users[0]
-    return user
+    current_id = session.get('user', None)
+    if current_id == None:
+        return logout()
+    for user in users:
+        if user['id'] == current_id:
+            return user
+    #user = users[0]
+    return None
+    return "user id not found"
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App

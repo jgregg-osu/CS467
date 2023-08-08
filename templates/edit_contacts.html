@@ -3,38 +3,41 @@
 
 {% block content %}
     <div class="table-container">
-    <h2 class="page-header">Contacts</h2>
-   
-    <form class="data-form" style="display: none;">
-        <input type="text" id="job-input" placeholder="Enter a job">
-        <button type="submit">Save</button>
-    </form>
+        <h2 class="page-header">Contacts</h2>
     
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Company</th>
-                <th>Title</th>
-                <th>Phone</th>
-                <th>Email</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><input type="text" class="input-box" placeholder="Name"></td>
-                <td><input type="text" class="input-box" placeholder="Company"></td>
-                <td><input type="text" class="input-box" placeholder="Job Title"></td>
-                <td><input type="text" class="input-box" placeholder="Phone"></td>
-                <td><input type="text" class="input-box" placeholder="Email"></td>
-            </tr>
-            <!-- Add more job rows here -->
-        </tbody>
-    </table>
-    <div>
-        <td><button class="save-button" onclick="refreshPage()">Save</button></td>
-        <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
-    </div>
+        <!-- <form class="data-form" style="display: none;"> -->
+        <form action="/save_contact_edit" method="POST">
+            <!-- <input type="text" id="contact-input" placeholder="Enter a job">
+            <button type="submit">Save</button> -->
+        <!-- </form> -->
+        
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Company</th>
+                        <th>Title</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <input type="hidden" name="index" id="index" value="{{ index }}">
+                        <td><input type="text" name="name" class="input-box" value="{{contact.name}}" placeholder="{{contact.name}}"></td>
+                        <td><input type="text" name="company" class="input-box" value="{{contact.company}}" placeholder="{{contact.company}}"></td>
+                        <td><input type="text" name="title" class="input-box" value="{{contact.title}}" placeholder="{{contact.title}}"></td>
+                        <td><input type="text" name="phone" class="input-box" value="{{contact.phone}}" placeholder="{{contact.phone}}"></td>
+                        <td><input type="text" name="email" class="input-box" value="{{contact.email}}" placeholder="{{contact.email}}"></td>
+                    </tr>
+                    <!-- Add more job rows here -->
+                    <td><button type="submit" class="save-button">Save</button></td>
+                    <td><button type="button" class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+                    <!-- {{contact}}
+                    {{index}} -->
+                </tbody>
+            </table>
+        </form>
 
     </div>
 

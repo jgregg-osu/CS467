@@ -43,7 +43,7 @@ google = oauth.remote_app(
 )
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         try:
@@ -245,10 +245,32 @@ def saveSkill():
     else:
         return ({'Error': 'Skill not created'}, 400)
 
-@app.route('/edit_skills')
-def edit_skills():
-    return render_template('edit_skills.html')
 
+@app.route('/edit_skills', methods=['GET'])
+def edit_skills():
+    index = int(request.args.get('index'))
+    user = getUser()
+    skill = user['skills'][index]
+    return render_template('edit_skills.html', skill=skill, index=index)
+
+@app.route('/save_skill_edit', methods=['POST'])
+def save_skill_edit():
+    if request.method == 'POST':
+        index = int(request.form.get('index'))
+        skill_name = request.form.get('skill')
+        experience_level = request.form.get('experience')
+
+        # Update the skill details in the user's skills list
+        user = getUser()
+        skills = user['skills']
+        if index < len(skills):
+            skills[index]['skill'] = skill_name
+            skills[index]['experience'] = experience_level
+            datastore_client.put(user)
+
+        return redirect(url_for('skills'))
+    else:
+        return render_template('index.html')
 
 @app.route('/deleteSkill', methods=['POST'])
 def delete_skill():
@@ -413,22 +435,79 @@ def saveContact():
 @app.route('/delete_contacts', methods=['POST'])
 def delete_contact():
     if request.method == 'POST':
-        contact_data = request.get_json()
-        index = contact_data.get('index')
-
+        # Get the job ID from the request body
+        data = request.get_json()
+        index = int(data.get('index'))
+        if index is None:
+            return ({"error": "Contact not provided"}, 400)
+        # Delete the job from the Datastore
         user = getUser()
-
-        del user['contacts'][index]
+        user['contacts'].pop(index)
         datastore_client.put(user)
-    
-        return ('successfully deleted', 201)
+
+        return ('', 204)
     else:
-        return ({'Error': 'Contact not deleted'}, 400)
+        return ({'Error': 'Delete unsuccesful'}, 400)
+    # if request.method == 'POST':
+    #     contact_data = request.get_json()
+    #     index = contact_data.get('index')
+
+    #     user = getUser()
+
+    #     entity_id = user['id']
+    #     entity_key = datastore_client.key('user', entity_id, 'contacts', index)
+    #     datastore_client.delete(entity_key)
 
 
-@app.route('/edit_contacts')
+    #     # del user['contacts'][index]
+    #     # datastore_client.put(user)
+    
+    #     return ('successfully deleted', 201)
+    # else:
+    #     return ({'Error': 'Contact not deleted'}, 400)
+
+
+# @app.route('/edit_contacts')
+# def edit_contacts():
+#     return render_template('edit_contacts.html')
+
+@app.route('/edit_contacts', methods=['GET'])
 def edit_contacts():
-    return render_template('edit_contacts.html')
+    if request.method == 'GET':
+        index = int(request.args.get('index'))
+        user = getUser()
+        contact = user['contacts'][index]
+        return render_template('edit_contacts.html', contact=contact, index=index)
+    else:
+        render_template('contacts.html')
+
+@app.route('/save_contact_edit', methods=['POST'])
+def save_contact_edit():
+    if request.method == 'POST':
+        index = int(request.form.get('index'))
+        name = request.form.get('name')
+        company = request.form.get('company')
+        title = request.form.get('title')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+
+        # Update the job in the jobs list if the index is valid
+        if index >= 0:
+            user = getUser()
+            if not user:
+                return redirect(url_for('login'))
+            contacts = user['contacts']
+            if index < len(contacts):
+                contacts[index]['name'] = name
+                contacts[index]['company'] = company
+                contacts[index]['title'] = title
+                contacts[index]['phone'] = phone
+                contacts[index]['email'] = email
+                datastore_client.put(user)
+
+        return render_template('contacts.html', user_entity=user)
+    else:
+        return render_template('index.html')
 
 
 @app.route('/listings', methods=['GET', 'POST'])
@@ -468,6 +547,15 @@ def listings():
     else:
         return logout()
 
+
+# def getUser():
+#     query = datastore_client.query(kind=constants.user)
+#     query.add_filter('id', '=', session.get('user'))
+#     users = list(query.fetch())
+#     if users:
+#         return users[0]
+#     else:
+#         return None
 
 def getUser():
     current_id = session.get('user', None)

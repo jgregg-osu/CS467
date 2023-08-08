@@ -1,41 +1,37 @@
 from flask import Flask, redirect, url_for, session, render_template, request
-from flask_oauthlib.client import OAuth
-from google.cloud import datastore
-import requests
-import os
 from google.auth.transport import requests as google_requests
+from flask_oauthlib.client import OAuth
 from google.oauth2 import id_token
-import constants
+from google.cloud import datastore
+from flask_session import Session
 from flask_bcrypt import Bcrypt
+import requests
 import json
+import os
 
-
+import constants
 import skills_module
-#import ast
-
-
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'version3-394707-28c42887d92a.json'
 
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
+
 app.secret_key = os.urandom(24)
 bcrypt = Bcrypt(app)
 oauth = OAuth(app)
+
+key = os.environ.get('CONSUMER_KEY')
+secret = os.environ.get('CONSUMER_SECRET')
+
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/sessions'
+Session(app)
+
+
 google = oauth.remote_app(
     'google',
-    # consumer_key='659922551489-fv356bauic9p6odg9t8hhlk75eg5ol83.apps.googleusercontent.com',
-    # consumer_secret='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',
-
-
-    # Jonathan's version
-    #consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
-    #consumer_secret='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',
-
-
-    #Chasen key
-    consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
-    consumer_secret='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',
+    consumer_key=str(key),
+    consumer_secret=str(secret),
     request_token_params={
         'scope': 'email',
     },
@@ -49,8 +45,11 @@ google = oauth.remote_app(
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST' or request.method == 'GET':
-        return google.authorize(callback=url_for('authorized', _external=True))
+    if request.method == 'POST':
+        try:
+            return google.authorize(callback=url_for('authorized', _external=True))
+        except:
+            return render_template('index.html')
     else:
         return render_template('index.html')
 
@@ -85,8 +84,6 @@ def authorized():
     users = list(query.fetch())
     for user in users:
         if user['id'] == user_id:
-            # return f"users: {json.dumps(user, indent=2)}, user['id]: {str(user['id'])}, user_id: {str(user_id)}"
-            # return 'Can you see this?'
             return redirect(url_for('skills'))
     user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
     user_entity['id'] = user_id
@@ -101,13 +98,6 @@ def authorized():
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('user')
-
-
-# Set the Referrer-Policy header for all responses
-@app.after_request
-def add_referrer_policy_header(response):
-    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
-    return response
 
 
 @app.route('/login-normal', methods=['POST'])
@@ -167,13 +157,14 @@ def instructions():
 
 @app.route('/skills')
 def skills():
-    if not verify_logged_in():
+    user = getUser()
+    if user == None:
         return logout()
 
-    sorted_job_skills = get_job_skills()
+    sorted_job_skills = get_job_skills(user)
 
     if request.method == 'GET':
-        user = getUser()
+       
         user_skills = user['skills']
 
         # Filter out any skill entries with a None value
@@ -189,14 +180,11 @@ def skills():
         return render_template('skills.html', my_skills=my_skills, job_skills=sorted_job_skills, my_skill_names=my_skill_names)
 
     else:
-        render_template('index.html')
+        return logout()
 
 
-def get_job_skills():
-    """Gets all skills required for jobs and compiles an array of dictionaries
-    holding each skill with a percentage of jobs it's used for and if the user
-    has learned the skill or not"""
-    user = getUser()
+def get_job_skills(user):
+    
     jobs = user['jobs']
     skills = user['skills']
     skills_array = []
@@ -216,9 +204,9 @@ def get_job_skills():
 
         for skill in job_skills:
             if skill.lower() in skills_added:
-                skills_for_jobs_dict[skill] += 1
+                skills_for_jobs_dict[skill.lower()] += 1
             else:
-                skills_for_jobs_dict[skill] = 1
+                skills_for_jobs_dict[skill.lower()] = 1
             skills_added.append(skill.lower())
 
     # Have a dictionary with each skill and the number of jobs it appears in
@@ -229,10 +217,8 @@ def get_job_skills():
         learned = (skill in skills_array)
         skill_display = {'skill': skill, 'percentage': percentage, 'count': count, 'learned': learned}
         display_skills_array.append(skill_display)
-
     # Display set not sorted
     sorted_job_skills = sorted(display_skills_array, key=lambda x: x['count'], reverse=True)
-
     return sorted_job_skills
 
 
@@ -306,16 +292,17 @@ def delete_skill():
 
 @app.route('/jobs', methods=['GET'])
 def jobs():
-    if not verify_logged_in():
-            return logout()
+    user = getUser()
+    if user == None:
+        return logout()
     if request.method == 'GET':
-        user = getUser()
         jobs = user['jobs']
         skills = skills_module.skills
         skills_json = json.dumps(skills)
         return render_template('jobs.html', jobs=jobs, skills=skills_json)
     else:
-        render_template('index.html')
+        return logout()
+    
 
 @app.route('/savejob', methods=['POST'])
 def savejob():
@@ -328,6 +315,8 @@ def savejob():
         contact = job_data.get('Contact')
 
         user = getUser()
+        if user == None:
+            logout()
 
         user['jobs'].append({
         'title': title,
@@ -353,9 +342,10 @@ def delete_job():
             return ({"error": "Job not provided"}, 400)
         # Delete the job from the Datastore
         user = getUser()
+        if user == None:
+            return logout()
         user['jobs'].pop(index)
         datastore_client.put(user)
-
         return ('', 204)
     else:
         return ({'Error': 'Delete unsuccesful'}, 400)
@@ -363,30 +353,32 @@ def delete_job():
 @app.route('/edit_jobs', methods=['GET'])
 def edit_jobs():
     if request.method == 'GET':
-        index = int(request.args.get('index'))
         user = getUser()
+        if user == None:
+            return logout()
+        index = int(request.args.get('index'))
         job = user['jobs'][index]
         skills = skills_module.skills
         skills_json = json.dumps(skills)
         selected_skills = job['skills']
-       
         return render_template('edit_jobs.html', job=job, index=index, skills=skills_json, selected_skills=selected_skills)
     else:
-        render_template('jobs.html')
+        return logout()
 
 @app.route('/saveJobEdit', methods=['POST'])
 def saveJobEdit():
     if request.method == 'POST':
+        user = getUser()
+        if user == None:
+            return logout()
         index = int(request.form.get('index'))
         title = request.form.get('title')
         salary = request.form.get('salary')
         skills = json.loads(request.form.get('skills'))
         start_date = request.form.get('start_date')
         contact = request.form.get('contacts')
-
         # Update the job in the jobs list if the index is valid
         if index >= 0:
-            user = getUser()
             jobs = user['jobs']
             if index < len(jobs):
                 jobs[index]['title'] = title
@@ -395,27 +387,10 @@ def saveJobEdit():
                 jobs[index]['start_date'] = start_date
                 jobs[index]['contact'] = contact
                 datastore_client.put(user)
-
         return render_template('jobs.html', jobs=user['jobs'])
     else:
-        return render_template('index.html')
+        return logout()
 
-
-# @app.route('/contacts')
-# def contacts():
-#     query = datastore_client.query(kind=constants.user)
-#     users = list(query.fetch())
-#     for user in users:
-#         print(user.key.id)
-#         print(False)
-#     if not verify_logged_in():
-#         return logout()
-#     return render_template('contacts.html')
-
-# @app.route('/contacts')
-# def contacts():
-#     user_id = session.get('user')
-#     return render_template('contacts.html', user_id=user_id)
 
 @app.route('/contacts')
 def contacts():
@@ -430,11 +405,6 @@ def contacts():
     user_entity = results[0]
     return render_template('contacts.html', user_entity=user_entity)
     
-
-# @app.route('/add_contacts', methods=['POST'])
-# def add_contacts():
-#     return 'works'
-#     return render_template('contacts.html')
 
 @app.route('/saveContact', methods=['POST'])
 def saveContact():
@@ -542,21 +512,20 @@ def save_contact_edit():
 
 @app.route('/listings', methods=['GET', 'POST'])
 def listings():
-    if not verify_logged_in():
+    user = getUser()
+    if user == None:
         return logout()
     if request.method == 'GET':
         return render_template('listings.html', results=[])
     elif request.method == 'POST':
-        ################################
-        # app id
-        # app key
-        ###############################
+        listings_api_id = os.environ.get('LISTINGS_API_ID')
+        listings_api_key = os.environ.get('LISTINGS_API_KEY')
         url = "http://api.adzuna.com:80/v1/api/jobs/us/search/1"
         jobTitle = request.form.get("job-title")
         location = request.form.get("location")
         params = {
-            "app_id": app_id,
-            "app_key": app_key,
+            "app_id": listings_api_id,
+            "app_key": listings_api_key,
             "results_per_page": 10,
             "what": jobTitle,
             "where": location,
@@ -576,14 +545,7 @@ def listings():
             })
         return render_template('listings.html', results=job_listings)
     else:
-        return render_template('index.html')
-
-
-def verify_logged_in():
-    if 'user' in session:
-        return True
-    return False
-
+        return logout()
 
 
 # def getUser():
@@ -596,21 +558,17 @@ def verify_logged_in():
 #         return None
 
 def getUser():
+    current_id = session.get('user', None)
+    if current_id == None:
+        return None
     query = datastore_client.query(kind=constants.user)
-    query.add_filter('id', '=', session.get('user'))
+    #query.add_filter('id', '=', session.get('user'))
     users = list(query.fetch())
-    if users:
-        user = users[0]
-        return user
-    else:
-        return redirect(url_for('login'))
+    for user in users:
+        if user['id'] == current_id:
+            return user
+    return None
+
 
 if __name__ == "__main__":
-    # This is used when running locally only. When deploying to Google App
-    # Engine, a webserver process such as Gunicorn will serve the app. This
-    # can be configured by adding an `entrypoint` to app.yaml.
-    # Flask's development server will automatically serve static files in
-    # the "static" directory. See:
-    # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
-    # App Engine itself will serve those files as configured in app.yaml.
     app.run(host="127.0.0.1", port=8080, debug=True)

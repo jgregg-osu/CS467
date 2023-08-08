@@ -4,3 +4,4 @@ Flask-OAuthlib
 requests
 bcrypt
 flask_bcrypt
+flask-Session

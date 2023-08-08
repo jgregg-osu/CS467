@@ -3,40 +3,42 @@
 
 {% block content %}
     <div class="table-container">
-    <h2 class="page-header">Skills</h2>
-   
-    <form class="data-form" style="display: none;">
-        <input type="text" id="job-input" placeholder="Enter a job">
-        <button type="submit">Save</button>
-    </form>
+        <h2 class="page-header">My Skills</h2>
     
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Skill</th>
-                <th>Required Jobs</th>
-                <th>Contact</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><input type="text" class="input-box" placeholder="Skill"></td>
-                <td><input type="text" class="input-box" placeholder="Required Jobs"></td>
-                <td><input type="text" class="input-box" placeholder="Contact"></td>
-            </tr>
-            <!-- Add more job rows here -->
-        </tbody>
-    </table>
-    
-    <div>
-        <td><button class="save-button" onclick="refreshPage()">Save</button></td>
-        <td><button class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+        <!-- <form class="data-form" style="display: none;"> -->
+        <form action="/save_skill_edit" method="POST">
+            <!-- <input type="text" id="contact-input" placeholder="Enter a Skill">
+            <button type="submit">Save</button> -->
+        <!-- </form> -->
+        
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Skill</th>
+                        <th>Experience</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <input type="hidden" name="index" id="index" value="{{ index }}">
+                        <td><input type="text" name="skill" class="input-box" value="{{skill.skill}}" placeholder="{{skill.skill}}"></td>
+                        <td><input type="text" name="experience" class="input-box" value="{{skill.experience}}"" placeholder="{{skill.experience}}"></td>
+                    </tr>
+                    <!-- Add more skill rows here -->
+                    <td><button type="submit" class="save-button">Save</button></td>
+                    <td><button type="button" class="cancel-button" onclick="refreshPage()">Cancel</button></td>
+                    <!-- {{contact}}
+                    {{index}} -->
+                </tbody>
+            </table>
+        </form>
+
     </div>
 
     <script>
-        function refreshPage() {
-            window.location.href = "{{ url_for('skills') }}";
-        }
+    function refreshPage() {
+        window.location.href = "{{ url_for('skills') }}";
+    }
     </script>
-
+    
 {% endblock %}

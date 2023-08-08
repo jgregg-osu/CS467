@@ -26,8 +26,8 @@
                     <td>{{ contact.title }}</td>
                     <td>{{ contact.phone }}</td>
                     <td>{{ contact.email }}</td>
-                    <td><button class="edit-button" onclick="navigateToEditContactsPage('{{loop.index - 1}}')">E{{loop.index - 1}}</button></td>
-                    <td><button class="delete-button" onclick="confirmDelete('{{loop.index - 1}}')">D{{loop.index0}}</button></td>
+                    <td><button class="edit-button" onclick="navigateToEditContactsPage('{{loop.index - 1}}')">Edit</button></td>
+                    <td><button class="delete-button" onclick="confirmDelete('{{loop.index - 1}}')">Delete</button></td>
                 </tr>
                 {% endfor %}
                 <tr>

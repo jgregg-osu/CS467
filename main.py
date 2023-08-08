@@ -13,7 +13,8 @@ import json
 import skills_module
 #import ast
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/cs467-394002-67a08c8a3380.json'
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'version3-394707-28c42887d92a.json'
 
 
 app = Flask(__name__)
@@ -28,13 +29,13 @@ google = oauth.remote_app(
 
 
     # Jonathan's version
-    consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
-    consumer_secret='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',
+    #consumer_key='44071086643-7vml5kuk78a41s350lqv5nqvrkbr07q4.apps.googleusercontent.com',
+    #consumer_secret='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',
 
 
     #Chasen key
-    # consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
-    # consumer_secret='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',
+    consumer_key='768902936273-3lbm236f7lnj0sc4s394k13al04hnqao.apps.googleusercontent.com',
+    consumer_secret='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',
     request_token_params={
         'scope': 'email',
     },
@@ -258,10 +259,32 @@ def saveSkill():
     else:
         return ({'Error': 'Skill not created'}, 400)
 
-@app.route('/edit_skills')
-def edit_skills():
-    return render_template('edit_skills.html')
 
+@app.route('/edit_skills', methods=['GET'])
+def edit_skills():
+    index = int(request.args.get('index'))
+    user = getUser()
+    skill = user['skills'][index]
+    return render_template('edit_skills.html', skill=skill, index=index)
+
+@app.route('/save_skill_edit', methods=['POST'])
+def save_skill_edit():
+    if request.method == 'POST':
+        index = int(request.form.get('index'))
+        skill_name = request.form.get('skill')
+        experience_level = request.form.get('experience')
+
+        # Update the skill details in the user's skills list
+        user = getUser()
+        skills = user['skills']
+        if index < len(skills):
+            skills[index]['skill'] = skill_name
+            skills[index]['experience'] = experience_level
+            datastore_client.put(user)
+
+        return redirect(url_for('skills'))
+    else:
+        return render_template('index.html')
 
 @app.route('/deleteSkill', methods=['POST'])
 def delete_skill():

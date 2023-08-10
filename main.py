@@ -27,6 +27,8 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = '/tmp/sessions'
 Session(app)
 
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/job-tracker-app-392713-cc69c2226a63.json'
+
 
 google = oauth.remote_app(
     'google',
@@ -54,45 +56,46 @@ def login():
         return render_template('index.html')
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['POST', 'GET'])
 def logout():
         session.pop('user', None)
         return redirect(url_for('index'))
 
 
-@app.route('/login/authorized', methods=['POST', 'GET'])
+@app.route('/login/authorized', methods=['POST'])
 def authorized():
-    response = google.authorized_response()
-    if response is None or response.get('access_token') is None:
-        return 'Access denied: reason={}, error={}'.format(
-            request.args['error_reason'],
-            request.args['error_description']
-        )
-    # Get the ID token from the response
-    id_token_response = response.get('id_token')
-    if id_token_response is None:
-        return 'Failed to get the ID token from Google response.'
-    try:
-        id_info = id_token.verify_oauth2_token(id_token_response, google_requests.Request())
-        user_id = id_info.get('sub')
-        if user_id is None:
-            return 'Failed to get user information from Google ID token.'
-    except ValueError as e:
-        return f'Failed to decode and verify the Google ID token: {e}'
-    session['user'] = user_id
-    query = datastore_client.query(kind=constants.user)
-    users = list(query.fetch())
-    for user in users:
-        if user['id'] == user_id:
-            return redirect(url_for('skills'))
-    user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
-    user_entity['id'] = user_id
-    user_entity['skills'] = []
-    user_entity['jobs'] = []
-    user_entity['contacts'] = []
-    datastore_client.put(user_entity)
-    # return 'Can you see this? 2'
-    return redirect(url_for('skills'))
+    if request.method == 'POST':
+        response = google.authorized_response()
+        if response is None or response.get('access_token') is None:
+            return 'Access denied: reason={}, error={}'.format(
+                request.args['error_reason'],
+                request.args['error_description']
+            )
+        # Get the ID token from the response
+        id_token_response = response.get('id_token')
+        if id_token_response is None:
+            return 'Failed to get the ID token from Google response.'
+        try:
+            id_info = id_token.verify_oauth2_token(id_token_response, google_requests.Request())
+            user_id = id_info.get('sub')
+            if user_id is None:
+                return 'Failed to get user information from Google ID token.'
+        except ValueError as e:
+            return f'Failed to decode and verify the Google ID token: {e}'
+        session['user'] = user_id
+        query = datastore_client.query(kind=constants.user)
+        users = list(query.fetch())
+        for user in users:
+            if user['id'] == user_id:
+                return redirect(url_for('skills'))
+        user_entity = datastore.entity.Entity(key=datastore_client.key(constants.user))
+        user_entity['id'] = user_id
+        user_entity['skills'] = []
+        user_entity['jobs'] = []
+        user_entity['contacts'] = []
+        datastore_client.put(user_entity)
+        # return 'Can you see this? 2'
+        return redirect(url_for('skills'))
 
 
 @google.tokengetter
@@ -100,7 +103,7 @@ def get_google_oauth_token():
     return session.get('user')
 
 
-@app.route('/login-normal', methods=['POST'])
+@app.route('/login-normal', methods=['POST', 'GET'])
 def loginNormal():
     if request.method == 'POST':
         # The user has not signed in with Google, so we need to check for username and password
@@ -188,11 +191,9 @@ def get_job_skills(user):
     jobs = user['jobs']
     skills = user['skills']
     skills_array = []
-
     for skill in skills:
-        # Check if the 'skill_name' key exists before accessing it
-        if 'skill_name' in skill:
-            skills_array.append(skill['skill_name'].lower())
+        if 'skill' in skill:
+            skills_array.append(skill['skill'].lower())
 
     skills_for_jobs_dict = {}
     skills_added = []
@@ -204,9 +205,9 @@ def get_job_skills(user):
 
         for skill in job_skills:
             if skill.lower() in skills_added:
-                skills_for_jobs_dict[skill.lower()] += 1
+                skills_for_jobs_dict[skill] += 1
             else:
-                skills_for_jobs_dict[skill.lower()] = 1
+                skills_for_jobs_dict[skill] = 1
             skills_added.append(skill.lower())
 
     # Have a dictionary with each skill and the number of jobs it appears in
@@ -214,7 +215,7 @@ def get_job_skills(user):
 
     for skill, count in skills_for_jobs_dict.items():
         percentage = str(int((count / total_jobs) * 100)) + "%"
-        learned = (skill in skills_array)
+        learned = (skill.lower() in skills_array)
         skill_display = {'skill': skill, 'percentage': percentage, 'count': count, 'learned': learned}
         display_skills_array.append(skill_display)
     # Display set not sorted
@@ -448,28 +449,7 @@ def delete_contact():
         return ('', 204)
     else:
         return ({'Error': 'Delete unsuccesful'}, 400)
-    # if request.method == 'POST':
-    #     contact_data = request.get_json()
-    #     index = contact_data.get('index')
 
-    #     user = getUser()
-
-    #     entity_id = user['id']
-    #     entity_key = datastore_client.key('user', entity_id, 'contacts', index)
-    #     datastore_client.delete(entity_key)
-
-
-    #     # del user['contacts'][index]
-    #     # datastore_client.put(user)
-    
-    #     return ('successfully deleted', 201)
-    # else:
-    #     return ({'Error': 'Contact not deleted'}, 400)
-
-
-# @app.route('/edit_contacts')
-# def edit_contacts():
-#     return render_template('edit_contacts.html')
 
 @app.route('/edit_contacts', methods=['GET'])
 def edit_contacts():
@@ -480,6 +460,7 @@ def edit_contacts():
         return render_template('edit_contacts.html', contact=contact, index=index)
     else:
         render_template('contacts.html')
+
 
 @app.route('/save_contact_edit', methods=['POST'])
 def save_contact_edit():
@@ -547,15 +528,6 @@ def listings():
     else:
         return logout()
 
-
-# def getUser():
-#     query = datastore_client.query(kind=constants.user)
-#     query.add_filter('id', '=', session.get('user'))
-#     users = list(query.fetch())
-#     if users:
-#         return users[0]
-#     else:
-#         return None
 
 def getUser():
     current_id = session.get('user', None)

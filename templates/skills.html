@@ -69,7 +69,7 @@
                     <td>{{ skill.percentage }}</td>
                     <td>{{ skill.count }}</td>
                     <td>
-                        {% if skill.skill in my_skill_names %}
+                        {% if skill.learned %}
                             <span style="color: green;">&#x2714;</span>  <!-- Green checkmark -->
                         {% else %}
                             <span style="color: red;">&#x2718;</span>  <!-- Red X -->
